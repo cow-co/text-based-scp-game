@@ -1,8 +1,5 @@
 #include <stdint.h>
-#include "constants.h"
-
-size_t const maxMTFs = 32;
-size_t const maxOwnedSCPs = 64;
+#include "constraints.h"
 
 enum Reputation {
     LOW
@@ -18,7 +15,7 @@ typedef struct {
 
 typedef struct {
   id: unsigned;
-  name: char[nameMaxLen];
+  name: char[];
   personnel: Personnel;
   active: bool;
 } MTF;
@@ -27,7 +24,9 @@ typedef struct {
 typedef struct {
     budget: unsigned;
     reputation: Reputation;
-    mtfs: MTF[maxMTFs];
-    scps: unsigned[maxOwnedSCPs];   // IDs of contained SCPs
-    playerName: char[nameMaxLen];
+    mtfs: MTF[];
+    scps: unsigned[];   // IDs of contained SCPs
+    playerName: char[];
 } Organisation;
+
+void print_organisation_details(const Organisation* const org);

@@ -1,35 +1,31 @@
-#include "constants.h"
-
-size_t const maxConversations = 32;
-size_t const convoNodeMaxOptions = 8;
-size_t const convoMaxNodes = 64;
+#include "constraints.h"
 
 typedef struct {
     id: unsigned;
-    name: char[nameMaxLen];
-    description: char[descMaxLen];
+    name: char[];
+    description: char[];
 } SCP;
 
 typedef struct {
-    text: char[descMaxLen];
+    text: char[];
     linksTo: unsigned;
 } ConvoOption;
 
 typedef struct {
     id: unsigned;
-    text: char[descMaxLen];
-    options: char[descMaxLen][convoNodeMaxOptions];
+    text: char[];
+    options: char[][];
 } ConvoNode;
 
 typedef struct {
     id: unsigned;
-    nodes: ConvoNode[convoMaxNodes];
+    nodes: ConvoNode[];
 } Conversation;
 
 typedef struct {
     id: unsigned;
-    name: char[nameMaxLen];
-    description: char[descMaxLen];
+    name: char[];
+    description: char[];
     role: ; // TODO Should this be a string or an enum?
-    conversations: Conversation[maxConversations];
+    conversations: Conversation[];
 } Person;

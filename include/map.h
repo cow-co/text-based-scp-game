@@ -1,26 +1,22 @@
-#include "constants.h"
-
-size_t const facilityMaxRooms = 64;
-size_t const facilityMaxEntrances = 8;
-size_t const roomMaxConnections = 16;
+#include "constraints.h"
 
 typedef struct {
     id: unsigned;
-    name: char[nameMaxLen];
-    description: char[descMaxLen];
-    characters: unsigned[]; // TODO size this array
+    name: char[];
+    description: char[];
+    characters: unsigned[]; 
     interactables: ;  // TODO make a struct for these, and put the array here
-    connections: unsigned[roomMaxConnections];
+    connections: unsigned[];
 } Room;
 
 typedef struct {
     id: unsigned;
-    name: char[nameMaxLen];
-    description: char[descMaxLen];
+    name: char[];
+    description: char[];
     scpID: unsigned;
 } Containment;
 
 typedef struct {
-    rooms: Room[facilityMaxRooms];
-    entranceRooms: unsigned[facilityMaxEntrances];
+    rooms: Room[];
+    entranceRooms: unsigned[];
 } Facility;
