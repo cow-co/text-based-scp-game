@@ -2,9 +2,9 @@
 #include "constraints.h"
 
 enum Reputation {
-    LOW
-    MODERATE
-    HIGH
+    LOW = 0;
+    MODERATE = 50;
+    HIGH = 100;
 };
 
 typedef struct {
@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
     budget: unsigned;
-    reputation: Reputation;
+    reputation: unsigned;
     mtfs: MTF[];
     scps: unsigned[];   // IDs of contained SCPs
     playerName: char[];

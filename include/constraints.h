@@ -1,0 +1,10 @@
+size_t const nameMaxLen = 64;
+size_t const descMaxLen = 1024;
+size_t const maxMTFs = 32;
+size_t const maxOwnedSCPs = 64;
+size_t const maxConversations = 32;
+size_t const convoNodeMaxOptions = 8;
+size_t const convoMaxNodes = 64;
+size_t const facilityMaxRooms = 64;
+size_t const facilityMaxEntrances = 8;
+size_t const roomMaxConnections = 16;
