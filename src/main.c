@@ -10,5 +10,3 @@ int main() {
     };
     print_organisation_details(&org);
 }
-
-

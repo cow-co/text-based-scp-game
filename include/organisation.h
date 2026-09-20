@@ -8,25 +8,25 @@ enum Reputation {
 };
 
 typedef struct {
-  operational: uint16_t;
-  wounded: uint16_t;
-  dead: uint16_t;
+  uint16_t operational;
+  uint16_t wounded;
+  uint16_t dead;
 } Personnel;
 
 typedef struct {
-  id: unsigned;
-  name: char[];
-  personnel: Personnel;
-  active: bool;
+  unsigned id;
+  char name[];
+  Personnel personnel;
+  bool active;
 } MTF;
 
 
 typedef struct {
-    budget: unsigned;
-    reputation: unsigned;
-    mtfs: MTF[];
-    scps: unsigned[];   // IDs of contained SCPs
-    playerName: char[];
+    unsigned budget;
+    unsigned reputation;
+    MTF mtfs[];
+    unsigned scps[];   // IDs of contained SCPs
+    char playerName[];
 } Organisation;
 
 void print_organisation_details(const Organisation* const org);

@@ -1,22 +1,22 @@
 #include "constraints.h"
 
 typedef struct {
-    id: unsigned;
-    name: char[];
-    description: char[];
-    characters: unsigned[]; 
+    unsigned id;
+    char name[];
+    char description[];
+    unsigned characters[]; 
     interactables: ;  // TODO make a struct for these, and put the array here
-    connections: unsigned[];
+    unsigned connections[];
 } Room;
 
 typedef struct {
-    id: unsigned;
-    name: char[];
-    description: char[];
-    scpID: unsigned;
+    unsigned id;
+    char name[];
+    char description[];
+    unsigned scpID;
 } Containment;
 
 typedef struct {
-    rooms: Room[];
-    entranceRooms: unsigned[];
+    Room rooms[];
+    unsigned entranceRooms[];
 } Facility;

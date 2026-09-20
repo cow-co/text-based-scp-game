@@ -1,31 +1,31 @@
 #include "constraints.h"
 
 typedef struct {
-    id: unsigned;
-    name: char[];
-    description: char[];
+    unsigned id;
+    char name[];
+    char description[];
 } SCP;
 
 typedef struct {
-    text: char[];
-    linksTo: unsigned;
+    char text[];
+    unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
-    id: unsigned;
-    text: char[];
-    options: char[][];
+    unsigned id;
+    char text[];
+    char options[][];
 } ConvoNode;
 
 typedef struct {
-    id: unsigned;
-    nodes: ConvoNode[];
+    unsigned id;
+    ConvoNode nodes[];
 } Conversation;
 
 typedef struct {
-    id: unsigned;
-    name: char[];
-    description: char[];
+    unsigned id;
+    char name[];
+    char description[];
     role: ; // TODO Should this be a string or an enum?
-    conversations: Conversation[];
+    Conversation conversations[];
 } Person;
