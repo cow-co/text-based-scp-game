@@ -1,10 +1,17 @@
-size_t const nameMaxLen = 64;
-size_t const descMaxLen = 1024;
-size_t const maxMTFs = 32;
-size_t const maxOwnedSCPs = 64;
-size_t const maxConversations = 32;
-size_t const convoNodeMaxOptions = 8;
-size_t const convoMaxNodes = 64;
-size_t const facilityMaxRooms = 64;
-size_t const facilityMaxEntrances = 8;
-size_t const roomMaxConnections = 16;
+#ifndef CONSTRAINTS_H
+#define CONSTRAINTS_H
+
+#include <stddef.h>
+
+extern const size_t nameMaxLen;
+extern const size_t descMaxLen;
+extern const size_t maxMTFs;
+extern const size_t maxOwnedSCPs;
+extern const size_t maxConversations;
+extern const size_t convoNodeMaxOptions;
+extern const size_t convoMaxNodes;
+extern const size_t facilityMaxRooms;
+extern const size_t facilityMaxEntrances;
+extern const size_t roomMaxConnections;
+
+#endif

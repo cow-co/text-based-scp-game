@@ -1,31 +1,36 @@
+#ifndef CHARACTERS_H
+#define CHARACTERS_H
+
 #include "constraints.h"
 
 typedef struct {
     unsigned id;
-    char name[];
-    char description[];
+    char* name;
+    char* description;
 } SCP;
 
 typedef struct {
-    char text[];
+    char* text;
     unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
     unsigned id;
-    char text[];
-    char options[][];
+    char* text;
+    char** options;
 } ConvoNode;
 
 typedef struct {
     unsigned id;
-    ConvoNode nodes[];
+    ConvoNode* nodes;
 } Conversation;
 
 typedef struct {
     unsigned id;
-    char name[];
-    char description[];
+    char* name;
+    char* description;
     role: ; // TODO Should this be a string or an enum?
-    Conversation conversations[];
+    Conversation* conversations;
 } Person;
+
+#endif

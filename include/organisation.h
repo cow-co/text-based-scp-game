@@ -1,10 +1,14 @@
+#ifndef ORGANISATION_H
+#define ORGANISATION_H
+
+#include <stddef.h>
 #include <stdint.h>
 #include "constraints.h"
 
 enum Reputation {
-    LOW = 0;
-    MODERATE = 50;
-    HIGH = 100;
+    LOW = 0,
+    MODERATE = 50,
+    HIGH = 100
 };
 
 typedef struct {
@@ -15,18 +19,20 @@ typedef struct {
 
 typedef struct {
   unsigned id;
-  char name[];
   Personnel personnel;
   bool active;
+  char* name;
 } MTF;
 
 
 typedef struct {
     unsigned budget;
     unsigned reputation;
-    MTF mtfs[];
-    unsigned scps[];   // IDs of contained SCPs
-    char playerName[];
+    unsigned* scps;   // IDs of contained SCPs
+    char* playerName;
+    MTF* mtfs;
 } Organisation;
 
 void print_organisation_details(const Organisation* const org);
+
+#endif
