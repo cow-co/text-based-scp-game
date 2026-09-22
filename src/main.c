@@ -1,7 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include "organisation.h"
 
-int main(int argc, char* argv[argc+1]) {
-    printf("count args: %d", argc);
-    return EXIT_SUCCESS;
+int main() {
+    Organisation org = {
+        .budget = 20,
+        .reputation = 10,
+        .mtfs = nullptr,
+        .scps = nullptr,
+        .playerName = "hello"
+    };
+    print_organisation_details(&org);
 }
