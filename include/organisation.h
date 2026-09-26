@@ -17,22 +17,26 @@ typedef struct {
   uint16_t dead;
 } Personnel;
 
+void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded);
+void regenerate(Personnel* const personnel, const uint16_t count, const bool fromWounded);
+
 typedef struct {
-  unsigned id;
+  const unsigned id;
   Personnel personnel;
   bool active;
-  char* name;
+  const char* name;
 } MTF;
 
 
 typedef struct {
     unsigned budget;
-    unsigned reputation;
+    uint8_t reputation;
     unsigned* scps;   // IDs of contained SCPs
-    char* playerName;
+    const char* playerName;
     MTF* mtfs;
 } Organisation;
 
 void print_organisation_details(const Organisation* const org);
-
+void parse_organisation_data(char* fileName, const Organisation* outOrg);
+void change_reputation(Organisation* const org, const int16_t delta);
 #endif

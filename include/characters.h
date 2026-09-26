@@ -3,34 +3,41 @@
 
 #include "constraints.h"
 
+enum SCPObjectClass {
+    SAFE,
+    EUCLID,
+    KETER
+};
+
 typedef struct {
-    unsigned id;
-    char* name;
-    char* description;
+    const unsigned id;
+    const char* name;
+    const char* description;
+    SCPObjectClass objectClass;
 } SCP;
 
 typedef struct {
-    char* text;
-    unsigned linksTo;
+    const char* text;
+    const unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
-    unsigned id;
-    char* text;
-    char** options;
+    const unsigned id;
+    const char* text;
+    const char** options;
 } ConvoNode;
 
 typedef struct {
-    unsigned id;
-    ConvoNode* nodes;
+    const unsigned id;
+    const ConvoNode* nodes;
 } Conversation;
 
 typedef struct {
-    unsigned id;
-    char* name;
-    char* description;
-    role: ; // TODO Should this be a string or an enum?
-    Conversation* conversations;
+    const unsigned id;
+    const char* name;
+    const char* description;
+    const role: ; // TODO Should this be a string or an enum?
+    const Conversation* conversations;
 } Person;
 
 #endif

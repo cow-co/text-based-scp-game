@@ -1,4 +1,6 @@
 #include "organisation.h"
+#include "narrative.h"
+#include <stdio.h>
 
 int main() {
     Organisation org = {
@@ -9,4 +11,6 @@ int main() {
         .playerName = "hello"
     };
     print_organisation_details(&org);
+    set_flag(10, true);
+    printf("%d\n", flags);
 }
