@@ -3,26 +3,25 @@
 
 #include "constraints.h"
 
-// TODO Swap to using statically-sized arrays
 typedef struct {
     const unsigned id;
-    const char* name;
-    const char* description;
-    unsigned* characters; 
+    const char[64] name;
+    const char[1024] description;
+    unsigned[8] characters; 
     interactables: ;  // TODO make a struct for these, and put the array here
-    unsigned* connections;
+    unsigned[8] connections;
 } Room;
 
 typedef struct {
     const unsigned id;
-    const char* name;
-    const char* description;
+    const char[64] name;
+    const char[1024] description;
     unsigned scpID;
 } Containment;
 
 typedef struct {
-    Room* rooms;
-    unsigned* entranceRooms;
+    Room[32] rooms;
+    unsigned[4] entranceRooms;
 } Facility;
 
 #endif

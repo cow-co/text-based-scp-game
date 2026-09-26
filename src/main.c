@@ -1,6 +1,7 @@
 #include "organisation.h"
 #include "narrative.h"
 #include <stdio.h>
+#include <math.h>
 
 int main() {
     Organisation org = {
@@ -12,5 +13,6 @@ int main() {
     };
     print_organisation_details(&org);
     set_flag(10, true);
-    printf("%d\n", flags);
+    unsigned long expected = pow(2, 10);
+    printf("%d (should print %lu)\n", flags, expected);
 }

@@ -52,14 +52,23 @@ void print_organisation_details(const Organisation* const org) {
 /**
  * Reads in a data file and fills the data into an Organisation object
  */
-void parse_organisation_data(char* fileName, const Organisation* outOrg) {
-    // TODO Fill this out
+void parse_organisation_data(const char* const filePath, const Organisation* outOrg) {
+    FILE* orgFP = fopen(filePath, "r");
+    if (orgFP == nullptr) {
+        // TODO Error handling
+    }
+
+    // TODO Parse the file
+
+    if(fclose(orgFP) == EOF) {
+        // TODO Error handling
+    }
 }
 
 
 /**
  * Updates changes the reputation of the organisation by the given amount.
- * Note: maximum is 100 rep, so this will calculate the floor.
+ * Note: maximum is 100 rep, so this will clamp to min(100, rep+delta)
  */
 void change_reputation(Organisation* const org, const int16_t delta) {
     if (-org->reputation > delta) {

@@ -11,33 +11,33 @@ enum SCPObjectClass {
 
 typedef struct {
     const unsigned id;
-    const char* name;
-    const char* description;
+    const char[64] name;
+    const char[8192] description;
     SCPObjectClass objectClass;
 } SCP;
 
 typedef struct {
-    const char* text;
+    const char[256] text;
     const unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
     const unsigned id;
-    const char* text;
-    const char** options;
+    const char[1024] text;
+    const ConvoOption[8] options;
 } ConvoNode;
 
 typedef struct {
     const unsigned id;
-    const ConvoNode* nodes;
+    const ConvoNode[32] nodes;
 } Conversation;
 
 typedef struct {
     const unsigned id;
-    const char* name;
-    const char* description;
+    const char[64] name;
+    const char[1024] description;
     const role: ; // TODO Should this be a string or an enum?
-    const Conversation* conversations;
+    const Conversation[16] conversations;
 } Person;
 
 #endif

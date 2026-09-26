@@ -24,19 +24,19 @@ typedef struct {
   const unsigned id;
   Personnel personnel;
   bool active;
-  const char* name;
+  const char[64] name;
 } MTF;
 
 
 typedef struct {
     unsigned budget;
     uint8_t reputation;
-    unsigned* scps;   // IDs of contained SCPs
-    const char* playerName;
+    unsigned[32] scps;   // IDs of contained SCPs
+    const char[64] playerName;
     MTF* mtfs;
 } Organisation;
 
 void print_organisation_details(const Organisation* const org);
-void parse_organisation_data(char* fileName, const Organisation* outOrg);
+void parse_organisation_data(const char* const filePath, const Organisation* outOrg);
 void change_reputation(Organisation* const org, const int16_t delta);
 #endif
