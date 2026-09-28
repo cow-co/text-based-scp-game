@@ -1,13 +1,9 @@
 #include "organisation.h"
+#include "tomlc17.h"
 #include <stdio.h>
 #include <tgmath.h>
 
 
-/**
- * Inflicts the given numbers of casualties on the given personnel entity.
- * Ensures that the number of active personnel does not wrap around
- * if losses exceed the number of personnel remaining.
- */
 void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded) {
     uint16_t newOperational = personnel->operational;
     if (dead >= newOperational) {
@@ -25,9 +21,6 @@ void inflict_casualties(Personnel* const personnel, const uint16_t dead, const u
     personnel->wounded += wounded;  // TODO Prevent wraparound 
 }
 
-/**
- * Regenerates active personnel into the personnel pool
- */
 void regenerate(Personnel* const personnel, const uint16_t count, const bool fromWounded) {
     uint16_t toAdd = count;
     if (fromWounded && count >= personnel->wounded) {
@@ -37,11 +30,6 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
     personnel->operational += toAdd;    // TODO Prevent Wraparound
 }
 
-/**
- * Displays all the information about an organisation;
- * currently mostly for debug purposes, but may later be extended to 
- * be used for actual gameplay.
- */
 void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
@@ -49,27 +37,43 @@ void print_organisation_details(const Organisation* const org) {
             Player name: \n", org->budget, org->reputation);
 }
 
-/**
- * Reads in a data file and fills the data into an Organisation object
- */
-void parse_organisation_data(const char* const filePath, const Organisation* outOrg) {
-    FILE* orgFP = fopen(filePath, "r");
-    if (orgFP == nullptr) {
-        // TODO Error handling
+int parse_organisation_data(const char* const filePath, Organisation* const outOrg) {
+    const toml_result_t tomlResult = toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        // TODO invoke an error message util
+        return EOF;
     }
 
-    // TODO Parse the file
-
-    if(fclose(orgFP) == EOF) {
-        // TODO Error handling
+    const toml_datum_t repDatum = toml_seek(tomlResult.toptab, "organisation.reputation");
+    const toml_datum_t budDatum = toml_seek(tomlResult.toptab, "organisation.budget");
+    if (repDatum.type != TOML_INT64) {
+        // TODO invoke error util
+        return EOF;
     }
+    if (budDatum.type != TOML_INT64) {
+        // TODO Invoke error util
+        return EOF;
+    }
+
+    // TODO Verify it's also less than or equal to 100
+    if (repDatum.u.int64 < 0) {
+        // TODO Invoke error util
+        return EOF;
+    }
+
+    if (budDatum.u.int64 < 0) {
+        // TODO Invoke error util
+        return EOF;
+    }
+    
+    outOrg->reputation = repDatum.u.int64;
+    outOrg->budget = budDatum.u.int64;
+
+    toml_free(tomlResult);
+    return 0;
 }
 
 
-/**
- * Updates changes the reputation of the organisation by the given amount.
- * Note: maximum is 100 rep, so this will clamp to min(100, rep+delta)
- */
 void change_reputation(Organisation* const org, const int16_t delta) {
     if (-org->reputation > delta) {
         org->reputation = 0;

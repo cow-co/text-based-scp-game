@@ -1,9 +1,12 @@
+/**
+ * @file organisation.h
+ */
+
 #ifndef ORGANISATION_H
 #define ORGANISATION_H
 
 #include <stddef.h>
 #include <stdint.h>
-#include "constraints.h"
 
 enum Reputation {
     LOW = 0,
@@ -17,26 +20,61 @@ typedef struct {
   uint16_t dead;
 } Personnel;
 
+/**
+ * @brief Inflicts the given numbers of casualties on the given personnel entity.
+ * 
+ * @detail Ensures that the number of active personnel does not wrap around
+ * if losses exceed the number of personnel remaining. Inflicts fatalities before wounded.
+ * So if we start with 10 operational personnel, and inflict 9 dead and 5 wounded, then 
+ * we will end up with 0 operational, 9 dead, and 1 wounded.
+ */
 void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded);
+
+/**
+ * @brief Regenerates active personnel into the personnel pool.
+ *
+ * @detail If fromWounded is set, then the personnel are regenerated from the pool of 
+ * injured personnel, and the number regenerated is min(count, number of wounded).
+ */
 void regenerate(Personnel* const personnel, const uint16_t count, const bool fromWounded);
 
 typedef struct {
   const unsigned id;
   Personnel personnel;
   bool active;
-  const char[64] name;
+  const char name[64];
 } MTF;
 
 
 typedef struct {
     unsigned budget;
     uint8_t reputation;
-    unsigned[32] scps;   // IDs of contained SCPs
-    const char[64] playerName;
-    MTF* mtfs;
+    unsigned scps[32];   // IDs of contained SCPs
+    const char playerName[64];
+    MTF mtfs[16];
 } Organisation;
 
+/**
+ * @brief Displays all the information about an organisation.
+ * 
+ * @detail Currently mostly for debug purposes, but may later be extended to 
+ * be used for actual gameplay.
+ */
 void print_organisation_details(const Organisation* const org);
-void parse_organisation_data(const char* const filePath, const Organisation* outOrg);
+
+/**
+ * @brief This function reads in a data file containing the initial setup of the player's Organisation, and fills the data into an Organisation object.
+ * 
+ * @return EOF if failure, 0 otherwise
+ * 
+ * @usage if (parse_organisation_data("file", &org) == EOF) { <handle error> } else {<continue>}
+ */
+int parse_organisation_data(const char* const filePath, Organisation* const outOrg);
+
+/**
+ * @brief Updates changes the reputation of the organisation by the given amount.
+ * 
+ * @detail Note: maximum is 100 rep, so this will clamp to min(100, rep+delta)
+ */
 void change_reputation(Organisation* const org, const int16_t delta);
 #endif
