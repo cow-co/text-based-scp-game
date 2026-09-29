@@ -4,6 +4,9 @@
 #include <tgmath.h>
 
 
+allMTFs = {};
+
+
 void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded) {
     uint16_t newOperational = personnel->operational;
     if (dead >= newOperational) {
@@ -46,11 +49,16 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 
     const toml_datum_t repDatum = toml_seek(tomlResult.toptab, "organisation.reputation");
     const toml_datum_t budDatum = toml_seek(tomlResult.toptab, "organisation.budget");
+    const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
     if (repDatum.type != TOML_INT64) {
         // TODO invoke error util
         return EOF;
     }
     if (budDatum.type != TOML_INT64) {
+        // TODO Invoke error util
+        return EOF;
+    }
+    if (skipsDatum.type != TOML_ARRAY) {
         // TODO Invoke error util
         return EOF;
     }
@@ -60,14 +68,19 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         // TODO Invoke error util
         return EOF;
     }
-
     if (budDatum.u.int64 < 0) {
         // TODO Invoke error util
         return EOF;
     }
+    // TODO Check skip array sizes versus size of skip list in Org struct
     
     outOrg->reputation = repDatum.u.int64;
     outOrg->budget = budDatum.u.int64;
+    outOrg->scps = skipDatum.u.elem;
+
+    // TODO Load all MTFs
+    // TODO SCPs
+    // TODO Player-controlled MTFs
 
     toml_free(tomlResult);
     return 0;

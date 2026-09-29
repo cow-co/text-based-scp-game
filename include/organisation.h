@@ -46,12 +46,15 @@ typedef struct {
 } MTF;
 
 
+extern MTF allMTFs[32];
+
+
 typedef struct {
     unsigned budget;
     uint8_t reputation;
     unsigned scps[32];   // IDs of contained SCPs
     const char playerName[64];
-    MTF mtfs[16];
+    unsigned mtfs[8];
 } Organisation;
 
 /**

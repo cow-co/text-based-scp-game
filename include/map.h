@@ -1,8 +1,6 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include "constraints.h"
-
 typedef struct {
     const unsigned id;
     const char[64] name;
