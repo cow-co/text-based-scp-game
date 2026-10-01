@@ -1,10 +1,11 @@
 #include "organisation.h"
 #include "tomlc17.h"
+#include "util.h"
 #include <stdio.h>
 #include <tgmath.h>
 
 
-allMTFs = {};
+MTF allMTFs[32] = {};
 
 
 void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded) {
@@ -37,14 +38,13 @@ void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
             Reputation: %u \n \
-            \
             Player name: \n", org->budget, org->reputation);
 }
 
 int parse_organisation_data(const char* const filePath, Organisation* const outOrg) {
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
-        // TODO invoke an error message util
+        log_error("Could not parse organisation config file!\n");
         return EOF;
     }
 
@@ -53,40 +53,40 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
     const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "organisation.mtfs");
     if (repDatum.type != TOML_INT64) {
-        // TODO invoke error util
+        log_error("In the organisation TOML, reputation should be an integer!");
         return EOF;
     }
-    if (budDatum.type != TOML_INT64) {
-        // TODO Invoke error util
+    if (budDatum.type != TOML_INT64) {                                                                                                        
+        log_error("In the organisation TOML, budget should be an integer!");
         return EOF;
     }
-    if (skipsDatum.type != TOML_ARRAY) {
-        // TODO Invoke error util
+    if (skipsDatum.type != TOML_ARRAY) {                                                                                                        
+        log_error("In the organisation TOML, scps should be an array!");
         return EOF;
     }
-    if (mtfsDatum.type != TOML_ARRAY) {
-        // TODO Invoke error util
+    if (mtfsDatum.type != TOML_ARRAY) {                                                                                                        
+        log_error("In the organisation TOML, mtfs should be an array!");
         return EOF;
     }
 
     // TODO Verify it's also less than or equal to 100
-    if (repDatum.u.int64 < 0) {
-        // TODO Invoke error util
+    if (repDatum.u.int64 < 0 || repDatum.u.int64 > 100) {
+        log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!");
         return EOF;
     }
-    if (budDatum.u.int64 < 0) {
-        // TODO Invoke error util
+    if (budDatum.u.int64 < 0) {                                                                                                        
+        log_error("In the organisation TOML, budget should be non-negative!");
         return EOF;
     }
 
     // XXX This only works if outOrg->scps is initialised with values; which I think is a reasonable contract.
-    if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
-        // TODO Error
+    if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {                                                                                                        
+        log_error("In the organisation TOML, scps array is too long!");
         return EOF;
     }
     // XXX This only works if outOrg->mtfs is initialised with values; which I think is a reasonable contract.                                                                          
-    if (mtfsDatum.u.arr.size > sizeof(outOrg->mtfs) / sizeof(outOrg->mtfs[0])) {                                                                                                       
-        // TODO Error                                                                                                                                                                   
+    if (mtfsDatum.u.arr.size > sizeof(outOrg->mtfs) / sizeof(outOrg->mtfs[0])) {                                                                                                        
+        log_error("In the organisation TOML, mtfs array is too long!");                                                                                                       
         return EOF;                                                                                                                                                                     
     }
     
@@ -97,8 +97,8 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
         // 0 holds special meaning as an end-marker in our ID arrays, 
         // so don't allow actual IDs to have that value
-        if (skipIDDatum.type != TOML_INT64 || skipIDDatum.u.int64 <= 0) {
-            // TODO Error
+        if (skipIDDatum.type != TOML_INT64 || skipIDDatum.u.int64 <= 0) {                                                                                                        
+            log_error("In the organisation TOML, the scps array elements should be strictly positive integers!");
             return EOF;
         }
         outOrg->scps[i] = skipIDDatum.u.int64;
@@ -108,8 +108,8 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         const toml_datum_t mtfIDDatum = mtfsDatum.u.arr.elem[i];                                                                                                                      
         // 0 holds special meaning as an end-marker in our ID arrays,                                                                                                                   
         // so don't allow actual IDs to have that value                                                                                                                                 
-        if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {                                                                                                               
-            // TODO Error                                                                                                                                                               
+        if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {                                                                                                                            
+            log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!");                                                                                           
             return EOF;                                                                                                                                                                 
         }                                                                                                                                                                               
         outOrg->mtfs[i] = mtfIDDatum.u.int64;                                                                                                                                          
