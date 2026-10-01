@@ -37,6 +37,7 @@ void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
             Reputation: %u \n \
+            \
             Player name: \n", org->budget, org->reputation);
 }
 
@@ -50,6 +51,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     const toml_datum_t repDatum = toml_seek(tomlResult.toptab, "organisation.reputation");
     const toml_datum_t budDatum = toml_seek(tomlResult.toptab, "organisation.budget");
     const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
+    const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "organisation.mtfs");
     if (repDatum.type != TOML_INT64) {
         // TODO invoke error util
         return EOF;
@@ -59,6 +61,10 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         return EOF;
     }
     if (skipsDatum.type != TOML_ARRAY) {
+        // TODO Invoke error util
+        return EOF;
+    }
+    if (mtfsDatum.type != TOML_ARRAY) {
         // TODO Invoke error util
         return EOF;
     }
@@ -72,15 +78,42 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         // TODO Invoke error util
         return EOF;
     }
-    // TODO Check skip array sizes versus size of skip list in Org struct
+
+    // XXX This only works if outOrg->scps is initialised with values; which I think is a reasonable contract.
+    if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
+        // TODO Error
+        return EOF;
+    }
+    // XXX This only works if outOrg->mtfs is initialised with values; which I think is a reasonable contract.                                                                          
+    if (mtfsDatum.u.arr.size > sizeof(outOrg->mtfs) / sizeof(outOrg->mtfs[0])) {                                                                                                       
+        // TODO Error                                                                                                                                                                   
+        return EOF;                                                                                                                                                                     
+    }
     
     outOrg->reputation = repDatum.u.int64;
     outOrg->budget = budDatum.u.int64;
-    outOrg->scps = skipDatum.u.elem;
 
-    // TODO Load all MTFs
-    // TODO SCPs
-    // TODO Player-controlled MTFs
+    for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {
+        const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
+        // 0 holds special meaning as an end-marker in our ID arrays, 
+        // so don't allow actual IDs to have that value
+        if (skipIDDatum.type != TOML_INT64 || skipIDDatum.u.int64 <= 0) {
+            // TODO Error
+            return EOF;
+        }
+        outOrg->scps[i] = skipIDDatum.u.int64;
+    }
+
+    for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {                                                                                                                                
+        const toml_datum_t mtfIDDatum = mtfsDatum.u.arr.elem[i];                                                                                                                      
+        // 0 holds special meaning as an end-marker in our ID arrays,                                                                                                                   
+        // so don't allow actual IDs to have that value                                                                                                                                 
+        if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {                                                                                                               
+            // TODO Error                                                                                                                                                               
+            return EOF;                                                                                                                                                                 
+        }                                                                                                                                                                               
+        outOrg->mtfs[i] = mtfIDDatum.u.int64;                                                                                                                                          
+    }
 
     toml_free(tomlResult);
     return 0;
