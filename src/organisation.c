@@ -34,6 +34,37 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
     personnel->operational += toAdd;    // TODO Prevent Wraparound
 }
 
+int parse_mtf_data(const char* const filePath) {
+    const toml_result_t tomlResult = toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not parse MTFs config file!\n");
+        return EOF;
+    }
+    const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "mtf");
+
+    if (mtfsDatum.type != TOML_ARRAY) {
+        log_error("The mtf field in the MTFs config file must be an array!\n");
+        return EOF;
+    }
+
+    if (mtfsDatum.u.arr.size > sizeof(allMTFs)/sizeof(allMTFs[0])) {
+        log_error("There are too many MTFs in the MTF config file!\n");
+        return EOF;
+    }
+
+    for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {
+        if (mtfsDatum.u.arr.elem[i].type != TOML_TABLE) {
+            log_error("Each item in the mtf array in the MTFs config file must be a table!\n");
+            return EOF;
+        }
+
+        // TODO parse the MTF into an MTF object and add to the allMTFs array 
+        // XXX Is it worth keeping a separate global for the number of MTFs (and similar for SCPs)? To prevent having to recalculate each time we need to traverse those arrays?
+    }
+
+    return 0;
+}
+
 void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
@@ -80,7 +111,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
 
     // XXX This only works if outOrg->scps is initialised with values; which I think is a reasonable contract.
-    if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {                                                                                                        
+    if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
         log_error("In the organisation TOML, scps array is too long!");
         return EOF;
     }
@@ -108,8 +139,8 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         const toml_datum_t mtfIDDatum = mtfsDatum.u.arr.elem[i];                                                                                                                      
         // 0 holds special meaning as an end-marker in our ID arrays,                                                                                                                   
         // so don't allow actual IDs to have that value                                                                                                                                 
-        if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {                                                                                                                            
-            log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!");                                                                                           
+        if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
+            log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!");
             return EOF;                                                                                                                                                                 
         }                                                                                                                                                                               
         outOrg->mtfs[i] = mtfIDDatum.u.int64;                                                                                                                                          

@@ -8,11 +8,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum Reputation {
+typedef enum {
     LOW = 0,
     MODERATE = 50,
     HIGH = 100
-};
+} Reputation;
 
 typedef struct {
   uint16_t operational;
@@ -47,6 +47,13 @@ typedef struct {
 
 
 extern MTF allMTFs[32];
+
+/**
+ * @brief Reads the given data file, containing all the available MTFs, and parses them into the `allMTFs` array.
+ * @detail Of course, this only allows up to size(allMTFs) items in the TOML array.
+ * @return EOF for failure, 0 otherwise
+ */
+int parse_mtf_data(const char* const filePath);
 
 
 typedef struct {

@@ -3,12 +3,3 @@ reputation = 10
 budget = 100000
 scps = [1, 2, 3]
 mtfs = [1]
-
-[mtfs.1]
-name = "Nine-Tailed Fox"
-personnel = 15
-
-
-[mtfs.2]
-name = "Red Right Hand"
-personnel = 24

@@ -2,6 +2,7 @@
 #include "narrative.h"
 #include <stdio.h>
 #include <math.h>
+#include "util.h"
 
 int main() {
     Organisation org = {
