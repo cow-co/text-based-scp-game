@@ -12,6 +12,7 @@ int main() {
         .scps = {},
         .playerName = ""
     };
+    parse_mtf_data("data/mtfs.toml");
     parse_organisation_data("data/organisation.toml", &org);
     print_organisation_details(&org);
 }

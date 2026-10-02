@@ -3,6 +3,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <tgmath.h>
+#include <string.h>
 
 
 MTF allMTFs[32] = {};
@@ -53,12 +54,52 @@ int parse_mtf_data(const char* const filePath) {
     }
 
     for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {
-        if (mtfsDatum.u.arr.elem[i].type != TOML_TABLE) {
+        const toml_datum_t mtfDatum = mtfsDatum.u.arr.elem[i];
+        if (mtfDatum.type != TOML_TABLE) {
             log_error("Each item in the mtf array in the MTFs config file must be a table!\n");
             return EOF;
         }
+        
+        const toml_datum_t mtfName = toml_get(mtfDatum, "name");
+        if (mtfName.type != TOML_STRING) {
+            log_error("MTF Name must be a string!\n");
+            return EOF;
+        }
+        if (mtfName.u.str.len >= sizeof(allMTFs[i].name)) {
+            log_error("MTF Name is too long!\n");
+            return EOF;
+        }
+        
+        // TODO ID
+        // TODO personnel count
+        const toml_datum_t mtfID = toml_get(mtfDatum, "id");
+        const toml_datum_t mtfPers = toml_get(mtfDatum, "personnel");
+        if (mtfID.type != TOML_INT64) {
+            log_error("MTF ID must be an integer!\n");
+            return EOF;
+        }
+        if (mtfID.u.int64 <= 0) {
+            log_error("MTF ID must be > 0!\n");
+            return EOF;
+        }
 
-        // TODO parse the MTF into an MTF object and add to the allMTFs array 
+        if (mtfPers.type != TOML_INT64) {
+            log_error("MTF personnel must be an integer!\n");
+            return EOF;
+        }
+        if (mtfPers.u.int64 < 0) {
+            log_error("MTF personnel must be non-negative!\n");
+            return EOF;
+        }
+
+        allMTFs[i].id = mtfID.u.int64;
+        Personnel pers = {
+            .wounded = 0,
+            .dead = 0,
+            .operational = mtfPers.u.int64
+        };
+        allMTFs[i].personnel = pers;
+        strncpy(allMTFs[i].name, mtfName.u.str.ptr, mtfName.u.str.len);
         // XXX Is it worth keeping a separate global for the number of MTFs (and similar for SCPs)? To prevent having to recalculate each time we need to traverse those arrays?
     }
 
