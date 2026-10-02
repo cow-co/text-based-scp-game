@@ -1,43 +1,44 @@
 #ifndef CHARACTERS_H
 #define CHARACTERS_H
 
-#include "constraints.h"
-
-enum SCPObjectClass {
+typedef enum {
     SAFE,
     EUCLID,
     KETER
-};
+} SCPObjectClass;
 
 typedef struct {
-    const unsigned id;
-    const char[64] name;
-    const char[8192] description;
+    unsigned id;
+    char name[64];
+    char description[8192];
     SCPObjectClass objectClass;
 } SCP;
 
+extern SCP allSCPs[32]; // Not literally ALL SCPs obviously, but all the ones available in the game
+int parse_scps(const char* const filePath);
+void print_scps();
+
 typedef struct {
-    const char[256] text;
+    const char text[256];
     const unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
     const unsigned id;
-    const char[1024] text;
-    const ConvoOption[8] options;
+    const char text[1024];
+    const ConvoOption options[8];
 } ConvoNode;
 
 typedef struct {
     const unsigned id;
-    const ConvoNode[32] nodes;
+    const ConvoNode nodes[32];
 } Conversation;
 
 typedef struct {
     const unsigned id;
-    const char[64] name;
-    const char[1024] description;
-    const role: ; // TODO Should this be a string or an enum?
-    const Conversation[16] conversations;
+    const char name[64];
+    const char description[1024];
+    const Conversation conversations[16];
 } Person;
 
 #endif

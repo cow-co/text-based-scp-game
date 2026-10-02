@@ -24,6 +24,7 @@ void inflict_casualties(Personnel* const personnel, const uint16_t dead, const u
         newOperational -= wounded;
     }
     personnel->wounded += wounded;  // TODO Prevent wraparound 
+    personnel->operational = newOperational;
 }
 
 void regenerate(Personnel* const personnel, const uint16_t count, const bool fromWounded) {
@@ -99,11 +100,31 @@ int parse_mtf_data(const char* const filePath) {
             .operational = mtfPers.u.int64
         };
         allMTFs[i].personnel = pers;
+        // We strncpy this because the pointer to the TOML string is invalidated
+        // when we call toml_free()
         strncpy(allMTFs[i].name, mtfName.u.str.ptr, mtfName.u.str.len);
         // XXX Is it worth keeping a separate global for the number of MTFs (and similar for SCPs)? To prevent having to recalculate each time we need to traverse those arrays?
     }
 
     return 0;
+}
+
+void print_mtfs() {
+    printf("MTFs:\n\n");
+    size_t countMTFs = sizeof(allMTFs) / sizeof(allMTFs[0]);
+    for (size_t i = 0; i < countMTFs; ++i) {
+        if (allMTFs[i].id == 0) {
+            return;
+        }
+        printf(
+            "%s\n\tID: %u\n\tOperational: %u\n\tWounded: %u\n\tDead: %u\n", 
+            allMTFs[i].name, 
+            allMTFs[i].id, 
+            allMTFs[i].personnel.operational, 
+            allMTFs[i].personnel.wounded, 
+            allMTFs[i].personnel.dead
+        );
+    }
 }
 
 void print_organisation_details(const Organisation* const org) {

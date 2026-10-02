@@ -1,0 +1,8 @@
+[[scp]]
+id = 1
+name = "SCP-049"
+description = "The Plague Doctor"
+[[scp]]
+id = 2
+name = "SCP-682"
+description = "Resilient Lizard"

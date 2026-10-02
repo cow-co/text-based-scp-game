@@ -55,6 +55,12 @@ extern MTF allMTFs[32];
  */
 int parse_mtf_data(const char* const filePath);
 
+/**
+ * @brief Displays all the MTFs to the screen
+ * @detail Currently mostly for debug purposes, but may later be extended to be used for actual gameplay
+ */
+void print_mtfs();
+
 
 typedef struct {
     unsigned budget;
