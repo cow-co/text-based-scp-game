@@ -2,9 +2,9 @@
 #define CHARACTERS_H
 
 typedef enum {
-    SAFE,
-    EUCLID,
-    KETER
+    SAFE = 0,
+    EUCLID = 1,
+    KETER = 2
 } SCPObjectClass;
 
 typedef struct {
@@ -30,15 +30,23 @@ typedef struct {
 } ConvoNode;
 
 typedef struct {
-    const unsigned id;
-    const ConvoNode nodes[32];
+    unsigned id;
+    ConvoNode nodes[32];
 } Conversation;
 
+extern Conversation allConvos[512]; // enough to hold max convos for max number of persons
+int parse_convos(const char* const filePath);
+void conversation(const unsigned id);
+
 typedef struct {
-    const unsigned id;
-    const char name[64];
-    const char description[1024];
-    const Conversation conversations[16];
+    unsigned id;
+    char name[64];
+    char description[1024];
+    Conversation conversations[16];
 } Person;
+
+extern Person allPeople[32];
+int parse_people(const char* const filePath);
+void print_people();
 
 #endif

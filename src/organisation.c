@@ -110,7 +110,7 @@ int parse_mtf_data(const char* const filePath) {
 }
 
 void print_mtfs() {
-    printf("MTFs:\n\n");
+    printf("MTFs:\n");
     size_t countMTFs = sizeof(allMTFs) / sizeof(allMTFs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
         if (allMTFs[i].id == 0) {

@@ -2,18 +2,18 @@
 #define MAP_H
 
 typedef struct {
-    const unsigned id;
-    const char[64] name;
-    const char[1024] description;
+    unsigned id;
+    char[64] name;
+    char[1024] description;
     unsigned[8] characters; 
-    interactables: ;  // TODO make a struct for these, and put the array here
+    //interactables: ;  // TODO make a struct for these, and put the array here
     unsigned[8] connections;
 } Room;
 
 typedef struct {
-    const unsigned id;
-    const char[64] name;
-    const char[1024] description;
+    unsigned id;
+    char[64] name;
+    char[1024] description;
     unsigned scpID;
 } Containment;
 
