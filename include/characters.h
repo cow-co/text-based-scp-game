@@ -19,14 +19,14 @@ int parse_scps(const char* const filePath);
 void print_scps();
 
 typedef struct {
-    const char text[256];
-    const unsigned linksTo;
+    char text[256];
+    unsigned linksTo;
 } ConvoOption;
 
 typedef struct {
-    const unsigned id;
-    const char text[1024];
-    const ConvoOption options[8];
+    unsigned id;
+    char text[1024];
+    ConvoOption options[8];
 } ConvoNode;
 
 typedef struct {

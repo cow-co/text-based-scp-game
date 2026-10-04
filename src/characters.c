@@ -95,8 +95,90 @@ void print_scps() {
     }
 }
 
-int parse_convos(const char* const filePath) {
+int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNode) {
+    const toml_datum_t nodeIDDatum = toml_get(*tomlNode, "id");
+    const toml_datum_t nodeTextDatum = toml_get(*tomlNode, "text");
+    if (nodeIDDatum.type != TOML_INT64 || nodeIDDatum.u.int64 <= 0) {
+        log_error("Node ID must be an integer > 0!\n");
+        return EOF;
+    }
+    if (nodeTextDatum.type != TOML_STRING || nodeTextDatum.u.str.len >= sizeof(outNode->text)) {
+        log_error("Node text is not a string, or is too long!\n");
+        return EOF;
+    }
+    outNode->id = nodeIDDatum.u.int64;
+    strncpy(outNode->text, nodeTextDatum.u.str.ptr, nodeTextDatum.u.str.len);
+    
+    const toml_datum_t nodeOptionsDatum = toml_get(*tomlNode, "option");
+    if (nodeOptionsDatum.type != TOML_ARRAY || nodeOptionsDatum.u.arr.elem[0].type != TOML_TABLE) {
+        log_error("Node options must be an array of tables!\n");
+        return EOF;
+    }
+    if (nodeOptionsDatum.u.arr.size > sizeof(outNode->options)/sizeof(outNode->options[0])) {
+        log_error("Node options array is too long!\n");
+        return EOF;
+    }
+    for (size_t i = 0; i < nodeOptionsDatum.u.arr.size; ++i) {
+        const toml_datum_t optionTextDatum = toml_get(nodeOptionsDatum.u.arr.elem[i], "text");
+        const toml_datum_t optionLinkDatum = toml_get(nodeOptionsDatum.u.arr.elem[i], "linksTo");
+        if (optionTextDatum.type != TOML_STRING || optionTextDatum.u.str.len >= sizeof(outNode->options[i].text)) {
+            log_error("Node option text is not a string, or is too long!\n");
+            return EOF;
+        }
+        if (optionLinkDatum.type != TOML_INT64 || optionLinkDatum.u.int64 <= 0) {
+            log_error("Option linkmust be an integer > 0!\n");
+            return EOF;
+        }
+        strncpy(outNode->options[i].text, optionTextDatum.u.str.ptr, optionTextDatum.u.str.len);
+        outNode->options[i].linksTo = optionLinkDatum.u.int64;
+    }
+    return EOF;
+} 
 
+int parse_convos(const char* const filePath) {
+    const toml_result_t tomlResult = toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not parse convos file\n");
+        return EOF;
+    }
+
+    const toml_datum_t convosDatum = toml_get(tomlResult.toptab, "conversation");
+    if (convosDatum.type != TOML_ARRAY || convosDatum.u.arr.elem[0].type != TOML_TABLE) {
+        log_error("Conversations TOML must be an array of tables!\n");
+        return EOF;
+    }
+    if (convosDatum.u.arr.size > sizeof(allConvos)/sizeof(allConvos[0])) {
+        log_error("Conversations array is too long!\n");
+        return EOF;
+    }
+
+    const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
+    for (size_t i = 0; i < convosDatum.u.arr.size; ++i) {
+        const toml_datum_t convoIDDatum = toml_get(convosDatum.u.arr.elem[i], "id");
+        if (convoIDDatum.type != TOML_INT64 || convoIDDatum.u.int64 <= 0) {
+            log_error("Conversation IDs must be integers > 0!\n");
+            return EOF;
+        }
+        printf("Processing convo with ID %ld\n", convoIDDatum.u.int64);
+        allConvos[i].id = convoIDDatum.u.int64;
+        const toml_datum_t convoNodesDatum = toml_get(convosDatum.u.arr.elem[i], "node");
+        if (convoNodesDatum.type != TOML_ARRAY || convoNodesDatum.u.arr.elem[0].type != TOML_TABLE) {
+            log_error("Conversation nodes must be an array of tables!\n");
+            return EOF;
+        }
+        if (convoNodesDatum.u.arr.size > maxNodes) {
+            log_error("Conversation nodes array is too long!\n");
+            return EOF;
+        }
+
+        
+        for (size_t j = 0; j < convoNodesDatum.u.arr.size; ++j) {
+            if (parse_convo_node(&(convoNodesDatum.u.arr.elem[j]), &(allConvos[i].nodes[j])) == EOF) {
+                return EOF;
+            }
+        }
+    }
+    return 0;
 }
 
 void conversation(const unsigned id) {
@@ -114,13 +196,27 @@ void conversation(const unsigned id) {
         log_error("Conversation not found!\n");
         return;
     }
-    printf("%s\n", convo->text);
-    // TODO List options
-    // TODO Allow selection of an option
-    // TODO Move to selected convo node
+
     bool exit = false;
+    ConvoNode* node = &(convo->nodes[0]);
+    printf("%s\n", node->text);
     while (!exit) {
         // TODO Make sure to always insert an "exit" option
+        size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
+        size_t numOptions = 0;
+        for (size_t i = 0; i < maxOptions; ++i) {
+            // We don't have IDs on the options, cos we don't need them; 
+            // so we just check if the option text is empty.
+            if (node->options[i].text[0] == '\0') {
+                break;
+            }
+            ++numOptions;
+            printf("[%zu] %s\n", i, node->options[i].text);
+        }
+        printf("[%zu] Exit\n", numOptions);
+        // TODO Select Option
+        // TODO Move to new node (ie update node to point to selected one)
+        exit = true;
     }
 }
 

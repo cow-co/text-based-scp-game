@@ -16,9 +16,11 @@ int main() {
     parse_scps("data/scps.toml");
     parse_mtf_data("data/mtfs.toml");
     parse_organisation_data("data/organisation.toml", &org);
+    parse_convos("data/convos.toml");
     print_organisation_details(&org);
     print_mtfs();
     print_scps();
     inflict_casualties(&(allMTFs[0].personnel), 3, 2);
     print_mtfs();
+    conversation(1);
 }
