@@ -3,6 +3,7 @@
 #include "tomlc17.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 SCP allSCPs[32] = {};
@@ -199,11 +200,12 @@ void conversation(const unsigned id) {
 
     bool exit = false;
     ConvoNode* node = &(convo->nodes[0]);
-    printf("%s\n", node->text);
+    size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
+    const size_t numCharsToRead = (maxOptions / 10) + 1;
     while (!exit) {
-        // TODO Make sure to always insert an "exit" option
-        size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
+        printf("%s\n", node->text);
         size_t numOptions = 0;
+        char readText[numCharsToRead + 1] = {};
         for (size_t i = 0; i < maxOptions; ++i) {
             // We don't have IDs on the options, cos we don't need them; 
             // so we just check if the option text is empty.
@@ -213,10 +215,21 @@ void conversation(const unsigned id) {
             ++numOptions;
             printf("[%zu] %s\n", i, node->options[i].text);
         }
+        if (numOptions == 0) {
+            break;
+        }
         printf("[%zu] Exit\n", numOptions);
-        // TODO Select Option
-        // TODO Move to new node (ie update node to point to selected one)
-        exit = true;
+
+        fgets(readText, numCharsToRead+1, stdin);
+        const int selection = atoi(readText);
+        if (selection < 0 || selection > numOptions) {
+            printf("Invalid Input!\n");
+        } else if (selection == numOptions) {
+            exit = true;
+        } else {
+            const unsigned link = node->options[selection].linksTo;
+            node = &(convo->nodes[link - 1]);
+        }
     }
 }
 
