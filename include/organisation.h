@@ -65,7 +65,6 @@ typedef struct {
     unsigned budget;
     uint8_t reputation;
     unsigned scps[32];   // IDs of contained SCPs
-    const char playerName[64];
     unsigned mtfs[8];
 } Organisation;
 

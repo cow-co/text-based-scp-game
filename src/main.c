@@ -2,6 +2,7 @@
 #include "narrative.h"
 #include "characters.h"
 #include "conversation.h"
+#include "menu.h"
 #include "map.h"
 #include <stdio.h>
 #include <math.h>
@@ -13,7 +14,6 @@ int main() {
         .reputation = 0,
         .mtfs = {},
         .scps = {},
-        .playerName = ""
     };
     printf("////////// Parsing Data Files //////////\n");
     if (parse_scps("data/scps.toml") == EOF) {
@@ -35,14 +35,5 @@ int main() {
         return 1;
     }
     printf("////////// Finished Parsing Data Files //////////\n");
-    printf("////////// People //////////\n");
-    print_people();
-    printf("////////// SCPs //////////\n");
-    print_scps();
-    printf("////////// MTFs //////////\n");
-    print_mtfs();
-    printf("////////// Facility //////////\n");
-    print_facility();
-    traverse_rooms(1);
-    conversation(1);
+    present_menu();
 }
