@@ -7,5 +7,6 @@
 extern _BitInt(64) flags;
 
 void set_flag(size_t flagBit, const bool set);
+bool test_flag(size_t flagBit);
 
 #endif
