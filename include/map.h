@@ -1,33 +1,26 @@
 #ifndef MAP_H
 #define MAP_H
+#include <stddef.h>
 
 
-// TODO Merge Containment and Room (union or same struct whatever?)
 typedef struct {
-    unsigned id;    // TODO Remove? Instead IDs are just indices in the arrays?
-    char[64] name;
-    char[1024] description;
-    unsigned[8] characters; 
+    char name[64];
+    char description[1024];
+    unsigned characters[8]; 
     //interactables: ;  // TODO make a struct for these, and put the array here
-    unsigned[8] connections;
+    unsigned containedSCP; // XXX Should probably make these ID refs into size_t
+    unsigned connections[8];
 } Room;
 
 typedef struct {
-    unsigned id;
-    char[64] name;
-    char[1024] description;
-    unsigned scpID;
-} Containment;
-
-typedef struct {
-    Room[32] rooms;
-    unsigned[4] entranceRooms;
+    Room rooms[32];
+    unsigned entranceRooms[4];
 } Facility;
 
 extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
-void traverse_room(const unsigned roomId);
+void traverse_room(const size_t roomId);
 
 #endif
