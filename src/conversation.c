@@ -54,16 +54,19 @@ int parse_convos(const char* const filePath) {
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse convos file\n");
+        toml_free(tomlResult);
         return EOF;
     }
 
     const toml_datum_t convosDatum = toml_get(tomlResult.toptab, "conversation");
     if (convosDatum.type != TOML_ARRAY || convosDatum.u.arr.elem[0].type != TOML_TABLE) {
         log_error("Conversations TOML must be an array of tables!\n");
+        toml_free(tomlResult);
         return EOF;
     }
     if (convosDatum.u.arr.size > sizeof(allConvos)/sizeof(allConvos[0])) {
         log_error("Conversations array is too long!\n");
+        toml_free(tomlResult);
         return EOF;
     }
 
@@ -72,19 +75,24 @@ int parse_convos(const char* const filePath) {
         const toml_datum_t convoNodesDatum = toml_get(convosDatum.u.arr.elem[i], "node");
         if (convoNodesDatum.type != TOML_ARRAY || convoNodesDatum.u.arr.elem[0].type != TOML_TABLE) {
             log_error("Conversation nodes must be an array of tables!\n");
+            toml_free(tomlResult);
             return EOF;
         }
         if (convoNodesDatum.u.arr.size > maxNodes) {
             log_error("Conversation nodes array is too long!\n");
+            toml_free(tomlResult);
             return EOF;
         }
 
         for (size_t j = 0; j < convoNodesDatum.u.arr.size; ++j) {
             if (parse_convo_node(&(convoNodesDatum.u.arr.elem[j]), &(allConvos[i].nodes[j])) == EOF) {
+                toml_free(tomlResult);
                 return EOF;
             }
         }
     }
+
+    toml_free(tomlResult);
     return 0;
 }
 
