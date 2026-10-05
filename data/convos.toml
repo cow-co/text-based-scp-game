@@ -1,27 +1,27 @@
 [[conversation]]
 id = 1
+# Node 1
 [[conversation.node]]
-id = 1
-text = "Text"
+text = "Convo 1 node 1"
 [[conversation.node.option]]
 text = "Option 1"
 linksTo = 2
 [[conversation.node.option]]
 text = "Option 2"
 linksTo = 3
+# Node 2
 [[conversation.node]]
-id = 2
-text = "2 text"
+text = "Convo 1 node 2"
+# Node 3
 [[conversation.node]]
-id = 3
-text = "3 text"
+text = "Convo 1 node 3"
 [[conversation]]
 id = 2
+# Node 1
 [[conversation.node]]
-id = 1
-text = "2-1 text"
+text = "Convo 2 node 1"
 [[conversation]]
 id = 3
+# Node 1
 [[conversation.node]]
-id = 1
-text = "3-1 Text"
+text = "Convo 3 node 1"
