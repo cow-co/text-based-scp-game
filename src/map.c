@@ -41,10 +41,12 @@ int parse_facility(const char* const filePath) {
     const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
     const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
     const size_t maxConnections = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
+    const size_t maxCharacters = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
     for (size_t i = 0; i < roomsDatum.u.arr.size; ++i) {
         const toml_datum_t roomNameDatum = toml_get(roomsDatum.u.arr.elem[i], "name");
         const toml_datum_t roomDescriptionDatum = toml_get(roomsDatum.u.arr.elem[i], "description");
         const toml_datum_t roomConnectionsDatum = toml_get(roomsDatum.u.arr.elem[i], "connections");
+        const toml_datum_t roomCharactersDatum = toml_get(roomsDatum.u.arr.elem[i], "characters");
         const toml_datum_t roomSCPDatum = toml_get(roomsDatum.u.arr.elem[i], "containedSCP");
 
         if (roomNameDatum.type != TOML_STRING || roomNameDatum.u.str.len >= maxNameLength || roomNameDatum.u.str.len == 0) {
@@ -55,8 +57,12 @@ int parse_facility(const char* const filePath) {
             log_error("Room description is not a string, or is too long!\n");         
             return EOF;
         }
-        if (roomConnectionsDatum.type != TOML_UNKNOWN && (roomConnectionsDatum.type != TOML_ARRAY || roomConnectionsDatum.u.arr.size >= maxConnections || roomConnectionsDatum.u.arr.elem[0].type != TOML_INT64)) {
+        if (roomConnectionsDatum.type != TOML_ARRAY || roomConnectionsDatum.u.arr.size >= maxConnections || roomConnectionsDatum.u.arr.elem[0].type != TOML_INT64) {
             log_error("Room connections is not an array of integers, or is too long!\n");         
+            return EOF;
+        }
+        if (roomCharactersDatum.type != TOML_UNKNOWN && (roomCharactersDatum.type != TOML_ARRAY || roomCharactersDatum.u.arr.size >= maxCharacters || roomCharactersDatum.u.arr.elem[0].type != TOML_INT64)) {
+            log_error("Room characters is not an array of integers, or is too long!\n");
             return EOF;
         }
         if (roomSCPDatum.type != TOML_UNKNOWN && (roomNameDatum.type != TOML_INT64 || roomSCPDatum.u.int64 <= 0)) {
@@ -69,7 +75,11 @@ int parse_facility(const char* const filePath) {
         if (roomSCPDatum.type != TOML_UNKNOWN) {
             siteFacility.rooms[i].containedSCP = roomSCPDatum.u.int64;
         }
-
+        if (roomCharactersDatum.type != TOML_UNKNOWN) {
+            for (size_t j = 0; j < roomConnectionsDatum.u.arr.size; ++j) {
+                siteFacility.rooms[i].characters[j] = roomCharactersDatum.u.arr.elem[j].u.int64;
+            }
+        }
         for (size_t j = 0; j < roomConnectionsDatum.u.arr.size; ++j) {
             siteFacility.rooms[i].connections[j] = roomConnectionsDatum.u.arr.elem[j].u.int64;
         }
@@ -110,6 +120,7 @@ void traverse_rooms(const size_t fromRoomID) {
             const unsigned connectsTo = room->connections[i];
             printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
         }
+        // TODO Add options for interacting with characters
         if (numOptions == 0) {
             break;
         }
