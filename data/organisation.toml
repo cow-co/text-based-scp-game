@@ -1,0 +1,5 @@
+[organisation]
+reputation = 10
+budget = 100000
+scps = [1, 2, 3]
+mtfs = [1]

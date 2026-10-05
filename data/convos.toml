@@ -1,0 +1,24 @@
+[[conversation]]
+# Node 1
+[[conversation.node]]
+text = "Convo 1 node 1"
+[[conversation.node.option]]
+text = "Option 1"
+linksTo = 2
+[[conversation.node.option]]
+text = "Option 2"
+linksTo = 3
+# Node 2
+[[conversation.node]]
+text = "Convo 1 node 2"
+# Node 3
+[[conversation.node]]
+text = "Convo 1 node 3"
+[[conversation]]
+# Node 1
+[[conversation.node]]
+text = "Convo 2 node 1"
+[[conversation]]
+# Node 1
+[[conversation.node]]
+text = "Convo 3 node 1"

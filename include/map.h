@@ -1,27 +1,26 @@
 #ifndef MAP_H
 #define MAP_H
+#include <stddef.h>
 
-#include "constraints.h"
 
 typedef struct {
-    unsigned id;
-    char* name;
-    char* description;
-    unsigned* characters; 
-    interactables: ;  // TODO make a struct for these, and put the array here
-    unsigned* connections;
+    char name[64];
+    char description[1024];
+    unsigned characters[8]; 
+    //interactables: ;  // TODO make a struct for these, and put the array here
+    unsigned containedSCP; // XXX Should probably make these ID refs into size_t
+    unsigned connections[8];
 } Room;
 
 typedef struct {
-    unsigned id;
-    char* name;
-    char* description;
-    unsigned scpID;
-} Containment;
-
-typedef struct {
-    Room* rooms;
-    unsigned* entranceRooms;
+    Room rooms[32];
+    unsigned entranceRooms[4];
 } Facility;
+
+extern Facility siteFacility;
+
+int parse_facility(const char* const filePath);
+void print_facility();
+void traverse_rooms(const size_t fromRoomID);
 
 #endif
