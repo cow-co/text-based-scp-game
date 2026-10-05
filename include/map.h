@@ -21,6 +21,6 @@ extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
-void traverse_room(const size_t roomId);
+void traverse_rooms(const size_t fromRoomID);
 
 #endif

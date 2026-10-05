@@ -90,7 +90,7 @@ int parse_convos(const char* const filePath) {
 
 
 void conversation(const size_t id) {
-    Conversation* convo = &allConvos[id-1];
+    Conversation* convo = nullptr;
     size_t countConvos = sizeof(allConvos) / sizeof(allConvos[0]);
     if (id <= countConvos && allConvos[id-1].nodes[0].text[0] != '\0') {
         convo = &allConvos[id-1];
@@ -102,11 +102,9 @@ void conversation(const size_t id) {
     bool exit = false;
     ConvoNode* node = &(convo->nodes[0]);
     size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
-    const size_t numCharsToRead = (maxOptions / 10) + 1;
     while (!exit) {
         printf("%s\n", node->text);
         size_t numOptions = 0;
-        char readText[numCharsToRead + 1] = {};
         for (size_t i = 0; i < maxOptions; ++i) {
             // We don't have IDs on the options, cos we don't need them; 
             // so we just check if the option text is empty.
@@ -121,8 +119,12 @@ void conversation(const size_t id) {
         }
         printf("[%zu] Exit\n", numOptions);
 
-        fgets(readText, numCharsToRead+1, stdin);
-        const int selection = atoi(readText);
+        int selection = -1;
+        const int count = fscanf(stdin, "%d", &selection);
+        if (count <= 0) {
+            printf("Could not read input!\n");
+        }
+        fscanf(stdin, "%*[^\n]");
         if (selection < 0 || selection > numOptions) {
             printf("Invalid Input!\n");
         } else if (selection == numOptions) {
@@ -142,7 +144,7 @@ void print_all_convos() {
         if (allConvos[i].nodes[0].text[0] == '\0') {
             continue;
         }
-        printf("Conversation %u\n", i+1);
+        printf("Conversation %zu\n", i+1);
         for (size_t j = 0; j < maxNodes; ++j) {
             if (allConvos[i].nodes[j].text[0] == '\0') {
                 break;

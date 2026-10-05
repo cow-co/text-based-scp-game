@@ -43,5 +43,6 @@ int main() {
     print_mtfs();
     printf("////////// Facility //////////\n");
     print_facility();
+    traverse_rooms(1);
     conversation(1);
 }

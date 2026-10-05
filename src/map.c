@@ -2,6 +2,7 @@
 #include "tomlc17.h"
 #include "util.h"
 #include <string.h>
+#include <stdlib.h>
 
 
 Facility siteFacility = {};
@@ -86,6 +87,47 @@ void print_facility() {
     }
 }
 
-void traverse_room(const size_t roomID) {
+void traverse_rooms(const size_t fromRoomID) {
+    Room* room = nullptr;
+    size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
+    if (fromRoomID <= countRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
+        room = &siteFacility.rooms[fromRoomID-1];
+    } else {
+        log_error("Room not found!\n");
+        return;
+    }
 
+    bool exit = false;
+    size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
+    while (!exit) {
+        printf("You are in %s\n\t%s\n", room->name, room->description);
+        size_t numOptions = 0;
+        for (size_t i = 0; i < maxConns; ++i) {
+            if (room->connections[i] == 0) {
+                break;
+            }
+            ++numOptions;
+            const unsigned connectsTo = room->connections[i];
+            printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
+        }
+        if (numOptions == 0) {
+            break;
+        }
+        printf("[%zu] Exit Game\n", numOptions);
+
+        int selection = -1;
+        const int count = fscanf(stdin, "%d", &selection);
+        if (count <= 0) {
+            log_error("Could not read input!\n");
+            return;
+        }
+        fscanf(stdin, "%*[^\n]");
+        if (selection < 0 || selection > numOptions) {
+            printf("Invalid Input!\n");
+        } else if (selection == numOptions) {
+            exit = true;
+        } else {
+            room = &(siteFacility.rooms[selection]);
+        }
+    }
 }

@@ -12,9 +12,11 @@ void log_message(const LogLevel level, const char* const message) {
     struct tm* local = localtime(&current);
     char timeText[64] = {0};
     const size_t written = strftime(timeText, sizeof(timeText), "%c", local);
-    if (level == LOG_LVL_ERROR) {
-        fprintf(stderr, "[%s] [ERROR] %s", timeText, message);
-    } else {
-        fprintf(stdout, "[%s] [INFO] %s", timeText, message);
+    if (written) {
+        if (level == LOG_LVL_ERROR) {
+            fprintf(stderr, "[%s] [ERROR] %s", timeText, message);
+        } else {
+            fprintf(stdout, "[%s] [INFO] %s", timeText, message);
+        }
     }
 }
