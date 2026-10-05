@@ -69,12 +69,6 @@ int parse_convos(const char* const filePath) {
 
     const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
     for (size_t i = 0; i < convosDatum.u.arr.size; ++i) {
-        const toml_datum_t convoIDDatum = toml_get(convosDatum.u.arr.elem[i], "id");
-        if (convoIDDatum.type != TOML_INT64 || convoIDDatum.u.int64 <= 0) {
-            log_error("Conversation IDs must be integers > 0!\n");
-            return EOF;
-        }
-        allConvos[i].id = convoIDDatum.u.int64;
         const toml_datum_t convoNodesDatum = toml_get(convosDatum.u.arr.elem[i], "node");
         if (convoNodesDatum.type != TOML_ARRAY || convoNodesDatum.u.arr.elem[0].type != TOML_TABLE) {
             log_error("Conversation nodes must be an array of tables!\n");
@@ -95,18 +89,12 @@ int parse_convos(const char* const filePath) {
 }
 
 
-void conversation(const unsigned id) {
-    Conversation* convo = nullptr;
+void conversation(const size_t id) {
+    Conversation* convo = &allConvos[id-1];
     size_t countConvos = sizeof(allConvos) / sizeof(allConvos[0]);
-    for (size_t i = 0; i < countConvos; ++i) {
-        if (allConvos[i].id == id) {
-            convo = &allConvos[i];
-            break;
-        } else if (allConvos[i].id == 0) {
-            break;
-        }
-    }
-    if (convo == nullptr) {
+    if (id <= countConvos && allConvos[id-1].nodes[0].text[0] != '\0') {
+        convo = &allConvos[id-1];
+    } else {
         log_error("Conversation not found!\n");
         return;
     }
@@ -154,7 +142,7 @@ void print_all_convos() {
         if (allConvos[i].nodes[0].text[0] == '\0') {
             continue;
         }
-        printf("Conversation %u\n", allConvos[i].id);
+        printf("Conversation %u\n", i+1);
         for (size_t j = 0; j < maxNodes; ++j) {
             if (allConvos[i].nodes[j].text[0] == '\0') {
                 break;

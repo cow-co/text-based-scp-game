@@ -39,7 +39,6 @@ void inflict_casualties(Personnel* const personnel, const uint16_t dead, const u
 void regenerate(Personnel* const personnel, const uint16_t count, const bool fromWounded);
 
 typedef struct {
-  unsigned id;
   Personnel personnel;
   bool active;
   char name[64];

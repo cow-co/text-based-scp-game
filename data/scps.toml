@@ -1,10 +1,8 @@
 [[scp]]
-id = 1
 name = "SCP-049"
 description = "The Plague Doctor"
 objectClass = 1
 [[scp]]
-id = 2
 name = "SCP-682"
 description = "Resilient Lizard"
 objectClass = 2

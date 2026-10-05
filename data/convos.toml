@@ -1,5 +1,4 @@
 [[conversation]]
-id = 1
 # Node 1
 [[conversation.node]]
 text = "Convo 1 node 1"
@@ -16,12 +15,10 @@ text = "Convo 1 node 2"
 [[conversation.node]]
 text = "Convo 1 node 3"
 [[conversation]]
-id = 2
 # Node 1
 [[conversation.node]]
 text = "Convo 2 node 1"
 [[conversation]]
-id = 3
 # Node 1
 [[conversation.node]]
 text = "Convo 3 node 1"

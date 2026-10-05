@@ -10,7 +10,6 @@ typedef enum {
 } SCPObjectClass;
 
 typedef struct {
-    unsigned id;
     char name[64];
     char description[8192];
     SCPObjectClass objectClass;
@@ -21,7 +20,6 @@ int parse_scps(const char* const filePath);
 void print_scps();
 
 typedef struct {
-    unsigned id;
     char name[64];
     char description[1024];
     char role[64];

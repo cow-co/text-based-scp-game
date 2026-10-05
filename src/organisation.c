@@ -71,19 +71,7 @@ int parse_mtf_data(const char* const filePath) {
             return EOF;
         }
         
-        // TODO ID
-        // TODO personnel count
-        const toml_datum_t mtfID = toml_get(mtfDatum, "id");
         const toml_datum_t mtfPers = toml_get(mtfDatum, "personnel");
-        if (mtfID.type != TOML_INT64) {
-            log_error("MTF ID must be an integer!\n");
-            return EOF;
-        }
-        if (mtfID.u.int64 <= 0) {
-            log_error("MTF ID must be > 0!\n");
-            return EOF;
-        }
-
         if (mtfPers.type != TOML_INT64) {
             log_error("MTF personnel must be an integer!\n");
             return EOF;
@@ -93,7 +81,6 @@ int parse_mtf_data(const char* const filePath) {
             return EOF;
         }
 
-        allMTFs[i].id = mtfID.u.int64;
         Personnel pers = {
             .wounded = 0,
             .dead = 0,
@@ -103,7 +90,6 @@ int parse_mtf_data(const char* const filePath) {
         // We strncpy this because the pointer to the TOML string is invalidated
         // when we call toml_free()
         strncpy(allMTFs[i].name, mtfName.u.str.ptr, mtfName.u.str.len);
-        // XXX Is it worth keeping a separate global for the number of MTFs (and similar for SCPs)? To prevent having to recalculate each time we need to traverse those arrays?
     }
 
     return 0;
@@ -112,13 +98,12 @@ int parse_mtf_data(const char* const filePath) {
 void print_mtfs() {
     size_t countMTFs = sizeof(allMTFs) / sizeof(allMTFs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
-        if (allMTFs[i].id == 0) {
+        if (allMTFs[i].name[0] == '\0') {
             return;
         }
         printf(
-            "%s\n\tID: %u\n\tOperational: %u\n\tWounded: %u\n\tDead: %u\n", 
+            "%s\n\tOperational: %u\n\tWounded: %u\n\tDead: %u\n", 
             allMTFs[i].name, 
-            allMTFs[i].id, 
             allMTFs[i].personnel.operational, 
             allMTFs[i].personnel.wounded, 
             allMTFs[i].personnel.dead
@@ -161,7 +146,6 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         return EOF;
     }
 
-    // TODO Verify it's also less than or equal to 100
     if (repDatum.u.int64 < 0 || repDatum.u.int64 > 100) {
         log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!");
         return EOF;
@@ -171,12 +155,10 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         return EOF;
     }
 
-    // XXX This only works if outOrg->scps is initialised with values; which I think is a reasonable contract.
     if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
         log_error("In the organisation TOML, scps array is too long!");
         return EOF;
     }
-    // XXX This only works if outOrg->mtfs is initialised with values; which I think is a reasonable contract.                                                                          
     if (mtfsDatum.u.arr.size > sizeof(outOrg->mtfs) / sizeof(outOrg->mtfs[0])) {                                                                                                        
         log_error("In the organisation TOML, mtfs array is too long!");                                                                                                       
         return EOF;                                                                                                                                                                     
@@ -187,8 +169,6 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 
     for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {
         const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
-        // 0 holds special meaning as an end-marker in our ID arrays, 
-        // so don't allow actual IDs to have that value
         if (skipIDDatum.type != TOML_INT64 || skipIDDatum.u.int64 <= 0) {                                                                                                        
             log_error("In the organisation TOML, the scps array elements should be strictly positive integers!");
             return EOF;
@@ -198,8 +178,6 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 
     for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {                                                                                                                                
         const toml_datum_t mtfIDDatum = mtfsDatum.u.arr.elem[i];                                                                                                                      
-        // 0 holds special meaning as an end-marker in our ID arrays,                                                                                                                   
-        // so don't allow actual IDs to have that value                                                                                                                                 
         if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
             log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!");
             return EOF;                                                                                                                                                                 
