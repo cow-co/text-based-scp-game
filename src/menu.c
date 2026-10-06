@@ -1,7 +1,26 @@
 #include "menu.h"
 #include "gameplay.h"
 #include "util.h"
+#include "narrative.h"
+#include "organisation.h"
 #include <stdio.h>
+
+
+const char saveFileName[] = "data/save.toml";
+
+
+void save_game() {
+    FILE* file = fopen(saveFileName, "w");
+    fprintf(file, "narrative_flags = %ld\n", (long)flags);
+    fprintf(file, "player_name = %s\n", playerName);
+    fprintf(file, "current_room = %d\n", 1);
+}
+
+
+void load_game() {
+    // TODO Parse file
+    // TODO Set player name, narrative flags, current room
+}
 
 
 void present_menu() {
