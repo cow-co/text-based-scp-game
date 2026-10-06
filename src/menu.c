@@ -1,7 +1,9 @@
 #include "menu.h"
 #include "gameplay.h"
 #include "util.h"
+#include "tomlc17.h"
 #include <stdio.h>
+#include <string.h>
 
 
 const char saveFileName[] = "data/save.toml";
@@ -16,13 +18,14 @@ void save_game() {
     }
 
     fprintf(file, "narrative_flags = %ld\n", (long)(progress.narrativeFlags));
-    fprintf(file, "player_name = %s\n", playerName);
+    fprintf(file, "player_name = \"%s\"\n", playerName);
     fprintf(file, "current_room = %zu\n", progress.currentRoom);
+    
     fprintf(file, "[organisation]\n");
     fprintf(file, "reputation = %u\n", progress.org.reputation);
     fprintf(file, "budget = %u\n", progress.org.budget);
-    // TODO Calculate countSCPs
     fprintf(file, "scps = [");
+    
     size_t countSCPs = sizeof(progress.org.scps) / sizeof(unsigned);
     bool isStart = true;
     for (size_t i = 0; i < countSCPs; ++i) {
@@ -34,7 +37,7 @@ void save_game() {
         } 
     }
     fprintf(file, "]\n");
-    // TODO Calculate countMTFs
+    
     size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
         if (progress.org.mtfs[i]) {
@@ -51,8 +54,48 @@ void save_game() {
 
 
 void load_game() {
-    // TODO Parse file
-    // TODO Set player name, narrative flags, current room
+    const toml_result_t tomlResult= toml_parse_file_ex(saveFileName);
+    if (!tomlResult.ok) {
+        log_error("Could not read saved-game file!\n");
+        printf("%s\n", tomlResult.errmsg);
+        toml_free(tomlResult);
+        return;
+    }
+    
+    const toml_datum_t nameDatum = toml_get(tomlResult.toptab, "player_name");
+    const toml_datum_t roomDatum = toml_get(tomlResult.toptab, "current_room");
+    const toml_datum_t narrativeDatum = toml_get(tomlResult.toptab, "narrative_flags");
+    const toml_datum_t orgDatum = toml_get(tomlResult.toptab, "organisation");
+
+    const size_t maxNameLen = sizeof(playerName);
+    if (nameDatum.type != TOML_STRING || nameDatum.u.str.len >= maxNameLen) {
+        log_error("Name field is not a string, or is too long!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (roomDatum.type != TOML_INT64) {
+        log_error("Room field is not an integer!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (narrativeDatum.type != TOML_INT64) {
+        log_error("Narrative flags field is not an integer!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (orgDatum.type != TOML_TABLE) {
+        log_error("Organisation field is not a table!\n");
+        toml_free(tomlResult);
+        return;
+    }
+
+    strncpy(playerName, nameDatum.u.str.ptr, nameDatum.u.str.len);
+    progress.currentRoom = roomDatum.u.int64;
+    progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
+
+    // TODO read organisation details
+
+    toml_free(tomlResult);
 }
 
 
@@ -81,7 +124,8 @@ void present_menu() {
                 play_game();
                 break;
             case 2:
-                printf("Placeholder...\n");
+                printf("Loading...\n");
+                load_game();
                 break;
             case 3:
                 printf("Exiting...\n");
