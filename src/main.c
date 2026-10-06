@@ -1,19 +1,23 @@
 #include "organisation.h"
-#include "narrative.h"
 #include "characters.h"
 #include "conversation.h"
 #include "menu.h"
+#include "gameplay.h"
 #include "map.h"
 #include <stdio.h>
 #include <math.h>
 #include "util.h"
 
 int main() {
-    Organisation org = {
-        .budget = 0,
-        .reputation = 0,
-        .mtfs = {},
-        .scps = {},
+    Progress progress = {
+        .currentRoom = 0,
+        .narrativeFlags = 0,
+        .org = {
+            .budget = 0,
+            .reputation = 0,
+            .mtfs = {},
+            .scps = {},
+        },
     };
     printf("////////// Parsing Data Files //////////\n");
     if (parse_scps("data/scps.toml") == EOF) {
@@ -22,7 +26,7 @@ int main() {
     if (parse_mtf_data("data/mtfs.toml") == EOF) {
         return 1;
     }
-    if (parse_organisation_data("data/organisation.toml", &org) == EOF) {
+    if (parse_organisation_data("data/organisation.toml", &progress.org) == EOF) {
         return 1;
     }
     if (parse_convos("data/convos.toml") == EOF) {

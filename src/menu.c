@@ -1,8 +1,6 @@
 #include "menu.h"
 #include "gameplay.h"
 #include "util.h"
-#include "narrative.h"
-#include "organisation.h"
 #include <stdio.h>
 
 
@@ -11,9 +9,9 @@ const char saveFileName[] = "data/save.toml";
 
 void save_game() {
     FILE* file = fopen(saveFileName, "w");
-    fprintf(file, "narrative_flags = %ld\n", (long)flags);
+    fprintf(file, "narrative_flags = %ld\n", (long)(progress.narrativeFlags));
     fprintf(file, "player_name = %s\n", playerName);
-    fprintf(file, "current_room = %d\n", 1);
+    fprintf(file, "current_room = %zu\n", progress.currentRoom);
 }
 
 
