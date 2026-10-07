@@ -93,7 +93,83 @@ void load_game() {
     progress.currentRoom = roomDatum.u.int64;
     progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
 
-    // TODO read organisation details
+    const toml_datum_t repDatum = toml_get(orgDatum, "reputation");
+    const toml_datum_t budDatum = toml_get(orgDatum, "budget");
+    const toml_datum_t scpDatum = toml_get(orgDatum, "scps");
+    const toml_datum_t mtfDatum = toml_get(orgDatum, "mtf");
+    const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);
+    const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    if (repDatum.type != TOML_INT64 || repDatum.u.int64 < 0) {
+        log_error("Reputation must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (budDatum.type != TOML_INT64 || budDatum.u.int64 < 0) {
+        log_error("Budget must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (scpDatum.type != TOML_ARRAY || (scpDatum.u.arr.size != 0 && scpDatum.u.arr.elem[0].type != TOML_INT64)) {
+        log_error("SCPs must be an array of integers (or empty)!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (scpDatum.u.arr.size > countSCPs) {
+        log_error("SCPs array is too long!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (mtfDatum.type != TOML_UNKNOWN && (mtfDatum.type != TOML_ARRAY || mtfDatum.u.arr.elem[0].type != TOML_TABLE)) {
+        log_error("MTFs must be an array of tables!\n");
+        toml_free(tomlResult);
+        return;
+    }
+    if (mtfDatum.u.arr.size > countMTFs) {
+        log_error("MTFs array is too long!\n");
+        toml_free(tomlResult);
+        return;
+    }
+
+    progress.org.reputation = repDatum.u.int64;
+    progress.org.budget = budDatum.u.int64;
+    if (scpDatum.u.arr.size > 0) {
+        for (size_t i = 0; i < scpDatum.u.arr.size; ++i) {
+            progress.org.scps[i] = scpDatum.u.arr.elem[i].u.int64;
+        }
+    }
+    if (mtfDatum.type != TOML_UNKNOWN && mtfDatum.u.arr.size > 0) {
+        for (size_t i = 0; i < mtfDatum.u.arr.size; ++i) {
+            const toml_datum_t mtfIDDatum = toml_get(mtfDatum.u.arr.elem[i], "id");
+            const toml_datum_t mtfOperationalDatum = toml_get(mtfDatum.u.arr.elem[i], "operational");
+            const toml_datum_t mtfWoundedDatum = toml_get(mtfDatum.u.arr.elem[i], "wounded");
+            const toml_datum_t mtfDeadDatum = toml_get(mtfDatum.u.arr.elem[i], "dead");
+            if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
+                log_error("MTF ID Must be an integer > 0!\n");
+                toml_free(tomlResult);
+                return;
+            }
+            if (mtfOperationalDatum.type != TOML_INT64 || mtfOperationalDatum.u.int64 < 0) {
+                log_error("MTF operational Must be an integer >= 0!\n");
+                toml_free(tomlResult);
+                return;
+            }
+            if (mtfWoundedDatum.type != TOML_INT64 || mtfWoundedDatum.u.int64 < 0) {
+                log_error("MTF wounded Must be an integer >= 0!\n");
+                toml_free(tomlResult);
+                return;
+            }
+            if (mtfDeadDatum.type != TOML_INT64 || mtfDeadDatum.u.int64 < 0) {
+                log_error("MTF dead Must be an integer >= 0!\n");
+                toml_free(tomlResult);
+                return;
+            }
+
+            progress.org.mtfs[i] = mtfIDDatum.u.int64;
+            allMTFs[mtfIDDatum.u.int64].personnel.operational = mtfOperationalDatum.u.int64;
+            allMTFs[mtfIDDatum.u.int64].personnel.wounded = mtfWoundedDatum.u.int64;
+            allMTFs[mtfIDDatum.u.int64].personnel.dead = mtfDeadDatum.u.int64;
+        }
+    }
 
     toml_free(tomlResult);
 }
@@ -126,6 +202,7 @@ void present_menu() {
             case 2:
                 printf("Loading...\n");
                 load_game();
+                print_organisation_details(&progress.org);
                 break;
             case 3:
                 printf("Exiting...\n");
