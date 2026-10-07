@@ -10,6 +10,8 @@ typedef struct {
     //interactables: ;  // TODO make a struct for these, and put the array here
     unsigned containedSCP; // XXX Should probably make these ID refs into size_t
     unsigned connections[8];
+    unsigned firstEntrySetsFlag;
+    unsigned firstEntryUnsetsFlag;
 } Room;
 
 typedef struct {
@@ -21,6 +23,5 @@ extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
-void traverse_rooms(const size_t fromRoomID);
 
 #endif

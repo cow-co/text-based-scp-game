@@ -16,6 +16,8 @@ typedef struct {
 
 extern char playerName[64];
 extern Progress progress;
+void conversation(const size_t id);
+void traverse_rooms(const size_t fromRoomID);
 void play_game();
 
 #endif

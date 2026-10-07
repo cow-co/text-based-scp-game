@@ -51,6 +51,8 @@ int parse_facility(const char* const filePath) {
         const toml_datum_t roomNameDatum = toml_get(roomsDatum.u.arr.elem[i], "name");
         const toml_datum_t roomDescriptionDatum = toml_get(roomsDatum.u.arr.elem[i], "description");
         const toml_datum_t roomConnectionsDatum = toml_get(roomsDatum.u.arr.elem[i], "connections");
+        const toml_datum_t roomSetsDatum = toml_get(roomsDatum.u.arr.elem[i], "firstEntrySetsFlag");
+        const toml_datum_t roomUnsetsDatum = toml_get(roomsDatum.u.arr.elem[i], "firstEntryUnsetsFlag");
         const toml_datum_t roomCharactersDatum = toml_get(roomsDatum.u.arr.elem[i], "characters");
         const toml_datum_t roomSCPDatum = toml_get(roomsDatum.u.arr.elem[i], "containedSCP");
 
@@ -61,6 +63,16 @@ int parse_facility(const char* const filePath) {
         }
         if (roomDescriptionDatum.type != TOML_STRING || roomDescriptionDatum.u.str.len >= maxDescLength) {
             log_error("Room description is not a string, or is too long!\n");         
+            toml_free(tomlResult);
+            return EOF;
+        }
+        if (roomSetsDatum.type != TOML_UNKNOWN && (roomSetsDatum.type != TOML_INT64 || roomSetsDatum.u.int64 < 0)) {
+            log_error("Room sets must be integer >= 0!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
+        if (roomUnsetsDatum.type != TOML_UNKNOWN && (roomUnsetsDatum.type != TOML_INT64 || roomUnsetsDatum.u.int64 < 0)) {
+            log_error("Room unsets must be integer >= 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
@@ -84,6 +96,12 @@ int parse_facility(const char* const filePath) {
         strncpy(siteFacility.rooms[i].description, roomDescriptionDatum.u.str.ptr, roomDescriptionDatum.u.str.len);
         if (roomSCPDatum.type != TOML_UNKNOWN) {
             siteFacility.rooms[i].containedSCP = roomSCPDatum.u.int64;
+        }
+        if (roomSetsDatum.type != TOML_UNKNOWN) {
+            siteFacility.rooms[i].firstEntrySetsFlag = roomSetsDatum.u.int64;
+        }
+        if (roomUnsetsDatum.type != TOML_UNKNOWN) {
+            siteFacility.rooms[i].firstEntryUnsetsFlag = roomUnsetsDatum.u.int64;
         }
         if (roomCharactersDatum.type != TOML_UNKNOWN) {
             for (size_t j = 0; j < roomConnectionsDatum.u.arr.size; ++j) {
@@ -109,48 +127,3 @@ void print_facility() {
     }
 }
 
-void traverse_rooms(const size_t fromRoomID) {
-    Room* room = nullptr;
-    size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
-    if (fromRoomID <= countRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
-        room = &siteFacility.rooms[fromRoomID-1];
-    } else {
-        log_error("Room not found!\n");
-        return;
-    }
-
-    bool exit = false;
-    size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
-    while (!exit) {
-        printf("You are in %s\n\t%s\n", room->name, room->description);
-        size_t numOptions = 0;
-        for (size_t i = 0; i < maxConns; ++i) {
-            if (room->connections[i] == 0) {
-                break;
-            }
-            ++numOptions;
-            const unsigned connectsTo = room->connections[i];
-            printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
-        }
-        // TODO Add options for interacting with characters
-        if (numOptions == 0) {
-            break;
-        }
-        printf("[%zu] Exit Game\n", numOptions);
-
-        int selection = -1;
-        const int count = fscanf(stdin, "%d", &selection);
-        if (count <= 0) {
-            log_error("Could not read input!\n");
-            return;
-        }
-        fscanf(stdin, "%*[^\n]");
-        if (selection < 0 || selection > numOptions) {
-            printf("Invalid Input!\n");
-        } else if (selection == numOptions) {
-            exit = true;
-        } else {
-            room = &(siteFacility.rooms[selection]);
-        }
-    }
-}
