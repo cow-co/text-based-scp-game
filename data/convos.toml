@@ -1,25 +1,24 @@
 [[conversation]]
 # Node 1-1
 [[conversation.node]]
-text = "Convo 1 node 1"
+text = "Welcome to Site 115, director. Would you like to ask any questions?"
+requiresUnset = 1
 [[conversation.node.option]]
-text = "Option 1"
+text = "What do we specialise in here?"
 linksTo = 2
 [[conversation.node.option]]
-text = "Option 2"
+text = "Any recent breaches?"
 linksTo = 3
 # Node 1-2
 [[conversation.node]]
-text = "Convo 1 node 2"
+text = "Most of what we do here relates to physical anomalies and cognitohazards."
 # Node 1-3
 [[conversation.node]]
-text = "Convo 1 node 3 (set flag 10)"
-setsNarrative = 10
+text = "Nope, nothing in the past couple months, though there was a fairly problematic one about 10 weeks back."
 [[conversation]]
 # Node 2-1
 [[conversation.node]]
-text = "Convo 2 node 1 (unsets flag 10)"
-unsetsNarrative = 10
+text = "Convo 2 node 1"
 [[conversation]]
 # Node 3-1
 [[conversation.node]]

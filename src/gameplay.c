@@ -119,6 +119,87 @@ void conversation(const size_t id) {
     }
 }
 
+/**
+ * @brief Handles presenting and executing on options for the given room
+ * @detail Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
+ * @param room In/Out param, room to present, and overwritten with next selected room pointer, or nullptr if player chooses to exit.
+ * @param maxConns Maximum number of connections from a room
+ * @param maxChars Maximum number of characters a room can have
+ */
+Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars) {
+    if (room->firstEntrySetsFlag != 0) {
+        printf("Setting flag %u\n", room->firstEntrySetsFlag);
+        set_flag(room->firstEntrySetsFlag - 1, true);
+        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
+    }
+    if (room->firstEntryUnsetsFlag != 0) {
+        printf("Unsetting flag %u\n", room->firstEntryUnsetsFlag);
+        set_flag(room->firstEntryUnsetsFlag - 1, false);
+        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
+    }
+    
+    printf("You are in %s\n\t%s\n", room->name, room->description);
+    
+    size_t numConns = 0;
+    size_t accessibleConns[maxConns] = {};
+    for (size_t i = 0; i < maxConns; ++i) {
+        const unsigned connectsTo = room->connections[i];
+        if (connectsTo == 0) {
+            break;
+        }
+        if (can_enter_room(connectsTo - 1)) {
+            accessibleConns[numConns] = connectsTo;
+            ++numConns;
+        }
+    }
+    for (size_t i = 0; i < maxConns; ++i) {
+        if (accessibleConns[i] == 0) {
+            break;
+        }
+        printf("[%zu] Go to %s\n", i, siteFacility.rooms[accessibleConns[i]-1].name);
+    }
+    
+    size_t numChars = 0;
+    for (size_t i = 0; i < maxChars; ++i) {
+        if (room->characters[i] == 0) {
+            break;
+        }
+        printf("[%zu] Talk to %s\n", numConns+numChars, allPeople[room->characters[i]-1].name);
+        ++numChars;
+    }
+    
+    size_t totalOpts = numConns + numChars; // XXX Technically _could_ wrap around, but in practice won't.
+    if (totalOpts == 0) {
+        printf("No options available...\n");
+        return nullptr;
+    }
+    printf("[%zu] Exit Game\n", totalOpts);
+
+    int selection = -1;
+    const int count = fscanf(stdin, "%d", &selection);
+    if (count <= 0) {
+        log_error("Could not read input!\n");
+        return nullptr;
+    }
+    fscanf(stdin, "%*[^\n]");
+    if (selection < 0 || selection > totalOpts) {
+        printf("Invalid Input!\n");
+        return room;
+    } else if (selection == totalOpts) {
+        return nullptr;
+    } else if (selection < numConns){
+        const unsigned selectedRoomID = accessibleConns[selection];
+        printf("Going to room %d\n", selectedRoomID);
+        return &(siteFacility.rooms[selectedRoomID-1]);
+    } else {
+        // FIXME SEGFAULT!
+        const unsigned selectedPersonID = selection - numConns;
+        printf("Time to chat to %s!\n", allPeople[selectedPersonID-1].name);
+        return room;
+        // TODO Present convo with selected character
+    }
+}
+
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
@@ -132,66 +213,17 @@ void traverse_rooms(const size_t fromRoomID) {
 
     bool exit = false;
     size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
+    size_t maxChars = sizeof(room->characters) / sizeof(room->characters[0]);
     while (!exit) {
-        if (room->firstEntrySetsFlag != 0) {
-            printf("Setting flag %u\n", room->firstEntrySetsFlag);
-            set_flag(room->firstEntrySetsFlag - 1, true);
-            printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-        }
-        if (room->firstEntryUnsetsFlag != 0) {
-            printf("Unsetting flag %u\n", room->firstEntryUnsetsFlag);
-            set_flag(room->firstEntryUnsetsFlag - 1, false); 
-            printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-        }
-        printf("You are in %s\n\t%s\n", room->name, room->description);
-        
-        size_t numOptions = 0;
-        size_t accessibleConns[maxConns] = {};
-        for (size_t i = 0; i < maxConns; ++i) {
-            const unsigned connectsTo = room->connections[i];
-            if (connectsTo == 0) {
-                break;
-            }
-            if (can_enter_room(connectsTo - 1)) {
-                accessibleConns[numOptions] = connectsTo;
-                ++numOptions;
-            }
-        }
-        for (size_t i = 0; i < maxConns; ++i) {
-            if (accessibleConns[i] == 0) {
-                break;
-            }
-            printf("[%zu] Go to %s\n", i, siteFacility.rooms[accessibleConns[i]-1].name);
-        }
-        
-        // TODO Add options for interacting with characters
-        
-        if (numOptions == 0) {
-            printf("No options available...\n");
+        room = handle_room(room, maxConns, maxChars);
+        if (room == nullptr) {
             break;
-        }
-        printf("[%zu] Exit Game\n", numOptions);
-
-        int selection = -1;
-        const int count = fscanf(stdin, "%d", &selection);
-        if (count <= 0) {
-            log_error("Could not read input!\n");
-            return;
-        }
-        fscanf(stdin, "%*[^\n]");
-        if (selection < 0 || selection > numOptions) {
-            printf("Invalid Input!\n");
-        } else if (selection == numOptions) {
-            exit = true;
-        } else {
-            const unsigned selectedRoomID = accessibleConns[selection];
-            printf("Going to room %d\n", selectedRoomID);
-            room = &(siteFacility.rooms[selectedRoomID-1]);
         }
     }
 }
 
 
+// TODO Make this accept the room to start at if we're loading a saved game
 void play_game() {
     traverse_rooms(1);
 }
