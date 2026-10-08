@@ -11,6 +11,12 @@ typedef struct {
 typedef struct {
     char text[1024];
     ConvoOption options[8];
+    // TODO In future these may want to be arrays
+    // TODO Maybe these should be on the option struct instead
+    unsigned setsFlag;
+    unsigned unsetsFlag;
+    unsigned requiresFlagSet;
+    unsigned requiresFlagUnset;
 } ConvoNode;
 
 typedef struct {
@@ -19,7 +25,6 @@ typedef struct {
 
 extern Conversation allConvos[512]; // enough to hold max convos for max number of persons
 int parse_convos(const char* const filePath);
-void conversation(const size_t id);
 void print_all_convos();
 
 #endif

@@ -11,11 +11,27 @@ Conversation allConvos[512] = {};
 
 int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNode) {
     const toml_datum_t nodeTextDatum = toml_get(*tomlNode, "text");
+    const toml_datum_t nodeSetDatum = toml_get(*tomlNode, "setsNarrative");
+    const toml_datum_t nodeUnsetDatum = toml_get(*tomlNode, "unsetsNarrative");
     if (nodeTextDatum.type != TOML_STRING || nodeTextDatum.u.str.len >= sizeof(outNode->text) || nodeTextDatum.u.str.len == 0) {
         log_error("Node text is not a string, or is too long, or has no content!\n");
         return EOF;
     }
+    if (nodeSetDatum.type != TOML_UNKNOWN && (nodeSetDatum.type != TOML_INT64 || nodeSetDatum.u.int64 < 0)) {
+        log_error("Node set must be integer >= 0!\n");
+        return EOF;
+    }
+    if (nodeUnsetDatum.type != TOML_UNKNOWN && (nodeUnsetDatum.type != TOML_INT64 || nodeUnsetDatum.u.int64 < 0)) {
+        log_error("Node unset must be integer >= 0!\n");
+        return EOF;
+    }
     strncpy(outNode->text, nodeTextDatum.u.str.ptr, nodeTextDatum.u.str.len);
+    if (nodeSetDatum.type != TOML_UNKNOWN) {
+        outNode->setsFlag = nodeSetDatum.u.int64;
+    }
+    if (nodeUnsetDatum.type != TOML_UNKNOWN) {
+        outNode->unsetsFlag = nodeUnsetDatum.u.int64;
+    }
 
     const toml_datum_t nodeOptionsDatum = toml_get(*tomlNode, "option");
     if (nodeOptionsDatum.type == TOML_UNKNOWN) {
@@ -94,54 +110,6 @@ int parse_convos(const char* const filePath) {
 
     toml_free(tomlResult);
     return 0;
-}
-
-
-void conversation(const size_t id) {
-    Conversation* convo = nullptr;
-    size_t countConvos = sizeof(allConvos) / sizeof(allConvos[0]);
-    if (id <= countConvos && allConvos[id-1].nodes[0].text[0] != '\0') {
-        convo = &allConvos[id-1];
-    } else {
-        log_error("Conversation not found!\n");
-        return;
-    }
-
-    bool exit = false;
-    ConvoNode* node = &(convo->nodes[0]);
-    size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
-    while (!exit) {
-        printf("%s\n", node->text);
-        size_t numOptions = 0;
-        for (size_t i = 0; i < maxOptions; ++i) {
-            // We don't have IDs on the options, cos we don't need them; 
-            // so we just check if the option text is empty.
-            if (node->options[i].text[0] == '\0') {
-                break;
-            }
-            ++numOptions;
-            printf("[%zu] %s\n", i, node->options[i].text);
-        }
-        if (numOptions == 0) {
-            break;
-        }
-        printf("[%zu] Exit\n", numOptions);
-
-        int selection = -1;
-        const int count = fscanf(stdin, "%d", &selection);
-        if (count <= 0) {
-            printf("Could not read input!\n");
-        }
-        fscanf(stdin, "%*[^\n]");
-        if (selection < 0 || selection > numOptions) {
-            printf("Invalid Input!\n");
-        } else if (selection == numOptions) {
-            exit = true;
-        } else {
-            const unsigned link = node->options[selection].linksTo;
-            node = &(convo->nodes[link - 1]);
-        }
-    }
 }
 
 

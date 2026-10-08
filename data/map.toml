@@ -9,3 +9,4 @@ connections = [2]
 name = "Security"
 description = "CCTV gaming"
 connections = [1]
+firstEntrySetsFlag = 2

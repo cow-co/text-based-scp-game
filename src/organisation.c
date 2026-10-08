@@ -123,8 +123,10 @@ void print_mtfs() {
 void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
-            Reputation: %u \n \
-            Player name: \n", org->budget, org->reputation);
+            Reputation: %u \n", 
+            org->budget, 
+            org->reputation
+    );
 }
 
 int parse_organisation_data(const char* const filePath, Organisation* const outOrg) {
