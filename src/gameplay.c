@@ -13,16 +13,45 @@ Progress progress = {};
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
         flagBit = 64;
+    } else if (flagBit < 0) {
+        log_error("Flag index is negative!\n");
+    } else {
+        progress.narrativeFlags = progress.narrativeFlags | (set << flagBit);
     }
-    progress.narrativeFlags = progress.narrativeFlags | (set << flagBit);
 }
 
 bool test_flag(size_t flagBit) {
     if (flagBit > 64) {
         flagBit = 64;
     }
-    bool set = progress.narrativeFlags & (1 << flagBit);
-    return set;
+    if (flagBit < 1) {
+        log_error("Flag index must be >= 1!\n");
+        return false;
+    } else {
+        flagBit = flagBit - 1;
+        bool set = progress.narrativeFlags & (1 << flagBit);
+        return set;
+    }
+}
+
+bool can_enter_room(size_t roomID) {
+    if (siteFacility.rooms[roomID].requiresFlagSet || siteFacility.rooms[roomID].requiresFlagUnset) {
+        const unsigned flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
+        const unsigned flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
+        return (test_flag(flagRequired) && !test_flag(flagUnrequired));
+    } else {
+        return true;
+    }
+}
+
+bool can_access_node(Conversation* convo, size_t nodeID) {
+    if (convo->nodes[nodeID-1].requiresFlagSet || convo->nodes[nodeID-1].requiresFlagUnset) {
+        const unsigned flagRequired = convo->nodes[nodeID-1].requiresFlagSet;
+        const unsigned flagUnrequired = convo->nodes[nodeID-1].requiresFlagUnset;
+        return (test_flag(flagRequired) && !test_flag(flagUnrequired));
+    } else {
+        return true;
+    }
 }
 
 void conversation(const size_t id) {
@@ -52,17 +81,24 @@ void conversation(const size_t id) {
         }
         printf("%s\n", node->text);
         size_t numOptions = 0;
+        size_t accessibleNodes[maxOptions] = {};
         for (size_t i = 0; i < maxOptions; ++i) {
             // We don't have IDs on the options, cos we don't need them; 
             // so we just check if the option text is empty.
             if (node->options[i].text[0] == '\0') {
                 break;
             }
-            ++numOptions;
+            if (can_access_node(convo, node->options[i].linksTo)) {
+                accessibleNodes[numOptions] = i;
+                ++numOptions;
+            }
             printf("[%zu] %s\n", i, node->options[i].text);
         }
         if (numOptions == 0) {
             break;
+        }
+        for (size_t i = 0; i < maxOptions; ++i) {
+            printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
         }
         printf("[%zu] Exit\n", numOptions);
 
@@ -77,7 +113,7 @@ void conversation(const size_t id) {
         } else if (selection == numOptions) {
             exit = true;
         } else {
-            const unsigned link = node->options[selection].linksTo;
+            const unsigned link = node->options[accessibleNodes[selection]].linksTo;
             node = &(convo->nodes[link - 1]);
         }
     }
@@ -108,17 +144,30 @@ void traverse_rooms(const size_t fromRoomID) {
             printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
         }
         printf("You are in %s\n\t%s\n", room->name, room->description);
+        
         size_t numOptions = 0;
+        size_t accessibleConns[maxConns] = {};
         for (size_t i = 0; i < maxConns; ++i) {
-            if (room->connections[i] == 0) {
+            const unsigned connectsTo = room->connections[i];
+            if (connectsTo == 0) {
                 break;
             }
-            ++numOptions;
-            const unsigned connectsTo = room->connections[i];
-            printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
+            if (can_enter_room(connectsTo - 1)) {
+                accessibleConns[numOptions] = connectsTo;
+                ++numOptions;
+            }
         }
+        for (size_t i = 0; i < maxConns; ++i) {
+            if (accessibleConns[i] == 0) {
+                break;
+            }
+            printf("[%zu] Go to %s\n", i, siteFacility.rooms[accessibleConns[i]-1].name);
+        }
+        
         // TODO Add options for interacting with characters
+        
         if (numOptions == 0) {
+            printf("No options available...\n");
             break;
         }
         printf("[%zu] Exit Game\n", numOptions);
@@ -135,8 +184,8 @@ void traverse_rooms(const size_t fromRoomID) {
         } else if (selection == numOptions) {
             exit = true;
         } else {
-            const unsigned selectedRoomID = room->connections[selection];
-            printf("GOing to room %d\n", selectedRoomID);
+            const unsigned selectedRoomID = accessibleConns[selection];
+            printf("Going to room %d\n", selectedRoomID);
             room = &(siteFacility.rooms[selectedRoomID-1]);
         }
     }

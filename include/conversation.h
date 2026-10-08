@@ -12,8 +12,11 @@ typedef struct {
     char text[1024];
     ConvoOption options[8];
     // TODO In future these may want to be arrays
+    // TODO Maybe these should be on the option struct instead
     unsigned setsFlag;
     unsigned unsetsFlag;
+    unsigned requiresFlagSet;
+    unsigned requiresFlagUnset;
 } ConvoNode;
 
 typedef struct {

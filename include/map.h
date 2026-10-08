@@ -12,6 +12,8 @@ typedef struct {
     unsigned connections[8];
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
+    unsigned requiresFlagSet;
+    unsigned requiresFlagUnset;
 } Room;
 
 typedef struct {
