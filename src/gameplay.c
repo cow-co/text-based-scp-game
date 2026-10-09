@@ -13,9 +13,10 @@ Progress progress = {};
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
         flagBit = 64;
-    } else if (flagBit < 0) {
-        log_error("Flag index is negative!\n");
+    } else if (flagBit < 1) {
+        log_error("Flag index must be >= 1!\n");
     } else {
+        flagBit -= 1;
         progress.narrativeFlags = progress.narrativeFlags | (set << flagBit);
     }
 }
@@ -28,7 +29,7 @@ bool test_flag(size_t flagBit) {
         log_error("Flag index must be >= 1!\n");
         return false;
     } else {
-        flagBit = flagBit - 1;
+        flagBit -= 1;
         bool set = progress.narrativeFlags & (1 << flagBit);
         return set;
     }
@@ -44,14 +45,59 @@ bool can_enter_room(size_t roomID) {
     }
 }
 
-bool can_access_node(Conversation* convo, size_t nodeID) {
-    if (convo->nodes[nodeID-1].requiresFlagSet || convo->nodes[nodeID-1].requiresFlagUnset) {
-        const unsigned flagRequired = convo->nodes[nodeID-1].requiresFlagSet;
-        const unsigned flagUnrequired = convo->nodes[nodeID-1].requiresFlagUnset;
-        return (test_flag(flagRequired) && !test_flag(flagUnrequired));
+bool can_access_node(const ConvoNode* const node) {
+    if (node->requiresFlagSet || node->requiresFlagUnset) {
+        return (test_flag(node->requiresFlagSet) && !test_flag(node->requiresFlagUnset));
     } else {
         return true;
     }
+}
+
+const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* node, size_t maxOptions) {
+    if (node->setsFlag != 0) {
+        printf("Setting flag %u\n", node->setsFlag);
+        set_flag(node->setsFlag, true);
+        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
+    }
+    if (node->unsetsFlag != 0) {
+        printf("Unsetting flag %u\n", node->unsetsFlag);
+        set_flag(node->unsetsFlag, false);
+        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
+    }
+    printf("\"%s\"\n", node->text);
+    size_t numOptions = 0;
+    size_t accessibleNodes[maxOptions] = {};
+    for (size_t i = 0; i < maxOptions; ++i) {
+        // We don't have IDs on the options, cos we don't need them; 
+        // so we just check if the option text is empty.
+        if (node->options[i].text[0] == '\0') {
+            break;
+        }
+        if (can_access_node(&convo->nodes[node->options[i].linksTo-1])) {
+            accessibleNodes[numOptions] = i;
+            ++numOptions;
+        }
+    }
+    for (size_t i = 0; i < numOptions; ++i) {
+        printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
+    }
+    printf("[%zu] Exit\n", numOptions);
+
+    int selection = -1;
+    const int count = fscanf(stdin, "%d", &selection);
+    if (count <= 0) {
+        printf("Could not read input!\n");
+    }
+    fscanf(stdin, "%*[^\n]");
+    if (selection < 0 || selection > numOptions) {
+        printf("Invalid Input!\n");
+    } else if (selection == numOptions) {
+        node = nullptr;
+    } else {
+        const unsigned link = node->options[accessibleNodes[selection]].linksTo;
+        node = &(convo->nodes[link - 1]);
+    }
+    return node;
 }
 
 void conversation(const size_t id) {
@@ -64,59 +110,17 @@ void conversation(const size_t id) {
         return;
     }
 
-    bool exit = false;
-    ConvoNode* node = &(convo->nodes[0]);
+    const ConvoNode* node = &(convo->nodes[0]);
     size_t maxOptions = sizeof(node->options) / sizeof(node->options[0]);
-    while (!exit) {
-        // TODO Should probably functionise this
-        if (node->setsFlag != 0) {
-            printf("Setting flag %u\n", node->setsFlag);
-            set_flag(node->setsFlag - 1, true);
-            printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-        }
-        if (node->unsetsFlag != 0) {
-            printf("Unsetting flag %u\n", node->unsetsFlag);
-            set_flag(node->unsetsFlag - 1, false);
-            printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-        }
-        printf("%s\n", node->text);
-        size_t numOptions = 0;
-        size_t accessibleNodes[maxOptions] = {};
-        for (size_t i = 0; i < maxOptions; ++i) {
-            // We don't have IDs on the options, cos we don't need them; 
-            // so we just check if the option text is empty.
-            if (node->options[i].text[0] == '\0') {
-                break;
-            }
-            if (can_access_node(convo, node->options[i].linksTo)) {
-                accessibleNodes[numOptions] = i;
-                ++numOptions;
-            }
-            printf("[%zu] %s\n", i, node->options[i].text);
-        }
-        if (numOptions == 0) {
-            break;
-        }
-        for (size_t i = 0; i < maxOptions; ++i) {
-            printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
-        }
-        printf("[%zu] Exit\n", numOptions);
-
-        int selection = -1;
-        const int count = fscanf(stdin, "%d", &selection);
-        if (count <= 0) {
-            printf("Could not read input!\n");
-        }
-        fscanf(stdin, "%*[^\n]");
-        if (selection < 0 || selection > numOptions) {
-            printf("Invalid Input!\n");
-        } else if (selection == numOptions) {
-            exit = true;
-        } else {
-            const unsigned link = node->options[accessibleNodes[selection]].linksTo;
-            node = &(convo->nodes[link - 1]);
-        }
+    while (node != nullptr) {
+        node = handle_node(convo, node, maxOptions);
     }
+}
+
+void handle_character(const size_t characterID) {
+    const Person* const character = &allPeople[characterID - 1];
+    printf("You are talking to %s\nTheir role is: %s\n\nDescription: %s\n\n\n", character->name, character->role, character->description);
+    conversation(character->conversation);
 }
 
 /**
@@ -129,12 +133,12 @@ void conversation(const size_t id) {
 Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars) {
     if (room->firstEntrySetsFlag != 0) {
         printf("Setting flag %u\n", room->firstEntrySetsFlag);
-        set_flag(room->firstEntrySetsFlag - 1, true);
+        set_flag(room->firstEntrySetsFlag, true);
         printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
     }
     if (room->firstEntryUnsetsFlag != 0) {
         printf("Unsetting flag %u\n", room->firstEntryUnsetsFlag);
-        set_flag(room->firstEntryUnsetsFlag - 1, false);
+        set_flag(room->firstEntryUnsetsFlag, false);
         printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
     }
     
@@ -182,6 +186,7 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
         return nullptr;
     }
     fscanf(stdin, "%*[^\n]");
+    printf("Selection: %d\n", selection);
     if (selection < 0 || selection > totalOpts) {
         printf("Invalid Input!\n");
         return room;
@@ -190,13 +195,14 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
     } else if (selection < numConns){
         const unsigned selectedRoomID = accessibleConns[selection];
         printf("Going to room %d\n", selectedRoomID);
+        progress.currentRoom = selectedRoomID;
         return &(siteFacility.rooms[selectedRoomID-1]);
     } else {
-        // FIXME SEGFAULT!
-        const unsigned selectedPersonID = selection - numConns;
-        printf("Time to chat to %s!\n", allPeople[selectedPersonID-1].name);
+        const int selectedPersonID = selection - numConns; // [1], [2] are rooms, [3] a convo; selection=3; numConns=2; 
+        const unsigned charID = room->characters[selectedPersonID];
+        printf("Time to chat to %s!\n", allPeople[charID-1].name);
+        handle_character(charID);
         return room;
-        // TODO Present convo with selected character
     }
 }
 
@@ -223,7 +229,6 @@ void traverse_rooms(const size_t fromRoomID) {
 }
 
 
-// TODO Make this accept the room to start at if we're loading a saved game
 void play_game() {
-    traverse_rooms(1);
+    traverse_rooms(progress.currentRoom);
 }

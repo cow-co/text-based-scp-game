@@ -197,12 +197,14 @@ void present_menu() {
                 }
                 break;
             case 1:
+                progress.currentRoom = 1;
                 play_game();
                 break;
             case 2:
                 printf("Loading...\n");
                 load_game();
                 print_organisation_details(&progress.org);
+                play_game();
                 break;
             case 3:
                 printf("Exiting...\n");
