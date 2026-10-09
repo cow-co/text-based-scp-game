@@ -124,7 +124,7 @@ int parse_people(const char* const filePath) {
         const toml_datum_t personNameDatum = toml_get(personsDatum.u.arr.elem[i], "name");
         const toml_datum_t personRoleDatum = toml_get(personsDatum.u.arr.elem[i], "role");
         const toml_datum_t personDescDatum = toml_get(personsDatum.u.arr.elem[i], "description");
-        const toml_datum_t personConvosDatum = toml_get(personsDatum.u.arr.elem[i], "conversations");
+        const toml_datum_t personConvosDatum = toml_get(personsDatum.u.arr.elem[i], "conversation");
 
         if (personNameDatum.type != TOML_STRING || personNameDatum.u.str.len >= sizeof(allPeople[0].name) || personNameDatum.u.str.len == 0) {
             log_error("Person name is not a string or is too long or has no content!\n");
@@ -141,22 +141,19 @@ int parse_people(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
-        if (personConvosDatum.type != TOML_UNKNOWN && (personConvosDatum.type != TOML_ARRAY || personConvosDatum.u.arr.elem[0].type != TOML_INT64)) {
-            log_error("Person conversations must be an array of integers!\n");
+        if (personConvosDatum.type != TOML_UNKNOWN && (personConvosDatum.type != TOML_INT64 || personConvosDatum.u.int64 <= 0)) {
+            log_error("Person conversations must be an integer >= 1!\n");
             toml_free(tomlResult);
             return EOF;
         }
 
         strncpy(allPeople[i].name, personNameDatum.u.str.ptr, personNameDatum.u.str.len);
+        allPeople[i].conversation = personConvosDatum.u.int64;
         if (personRoleDatum.u.str.len > 0) {
             strncpy(allPeople[i].role, personRoleDatum.u.str.ptr, personRoleDatum.u.str.len);
         }
         if (personDescDatum.u.str.len > 0) {
             strncpy(allPeople[i].description, personDescDatum.u.str.ptr, personDescDatum.u.str.len);
-        }
-
-        for (size_t j = 0; j < personConvosDatum.u.arr.size; ++j) {
-            allPeople[i].conversations[j] = personConvosDatum.u.arr.elem[j].u.int64;
         }
     }
 

@@ -2,4 +2,9 @@
 name = "Alto Clef"
 role = "Director of Site 19"
 description = "A bit of an arsehole"
-conversations = [1,2,3]
+conversation = 2
+[[person]]
+name = "Dr Anderson"
+role = "Guide"
+description = "Average height, average build, average hair, average existence"
+conversation = 1

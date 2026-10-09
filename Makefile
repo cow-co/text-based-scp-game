@@ -6,7 +6,7 @@ EXE := $(BIN_DIR)/scpgame
 SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJ := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-CC := gcc-14
+CC := gcc
 CPPFLAGS := -Iinclude -MMD -MP
 CFLAGS	 := -Wall -std=c23 -pedantic
 LDFLAGS	 := -Llib

@@ -23,7 +23,7 @@ typedef struct {
     char name[64];
     char description[1024];
     char role[64];
-    unsigned conversations[16];
+    size_t conversation;  // TODO Should probably ensure all IDs are size_t
 } Person;
 
 extern Person allPeople[32];
