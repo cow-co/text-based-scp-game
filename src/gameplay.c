@@ -15,9 +15,12 @@ void set_flag(size_t flagBit, const bool set) {
         flagBit = 64;
     } else if (flagBit < 1) {
         log_error("Flag index must be >= 1!\n");
+    } else if (set) {
+        flagBit -= 1;
+        progress.narrativeFlags |= 1 << flagBit;
     } else {
         flagBit -= 1;
-        progress.narrativeFlags = progress.narrativeFlags | (set << flagBit);
+        progress.narrativeFlags &= ~(1 << flagBit);
     }
 }
 
