@@ -1,0 +1,186 @@
+#include "unity.h"
+#include "gameplay.h"
+#include <stdio.h>
+
+void setUp() {}
+void tearDown() {}
+
+/**
+ * Gameplay tests
+ */
+
+void test_ChecksDefaultFlag() {
+    bool check = test_flag(1);
+    TEST_ASSERT(check == false);
+}
+
+void test_ChecksSetFlag() {
+    set_flag(1, true);
+    bool check = test_flag(1);
+    TEST_ASSERT(check == true);
+    set_flag(1, false);
+}
+
+void test_ChecksUnsetFlag() {
+    set_flag(1, true);
+    set_flag(1, false);
+    bool check = test_flag(1);
+    TEST_ASSERT(check == false);
+}
+
+void test_ChecksFlagSetAmongstMany() {
+    set_flag(1, true);
+    set_flag(5, true);
+    set_flag(10, true);
+    set_flag(15, true);
+
+    bool check = test_flag(5);
+
+    TEST_ASSERT(check == true);
+}
+
+void test_ChecksFlagUnsetAmongstMany() {
+    set_flag(1, true);
+    set_flag(5, true);
+    set_flag(10, true);
+    set_flag(15, true);
+
+    bool check = test_flag(6);
+
+    TEST_ASSERT(check == false);
+}
+
+/**
+ * Organisation Tests
+ */
+
+void test_BadOrganisationFiles() {
+    Organisation org = {};
+    int res = parse_organisation_data("tests/data/organisation/negative_budget.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/negative_rep.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/rep_over_100.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/too_many_skips.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/too_many_mtfs.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/skips_not_array.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/mtfs_not_array.toml", &org);
+    TEST_ASSERT(res == EOF);
+
+    res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
+    TEST_ASSERT(res == EOF);
+}
+
+void test_GoodOrganisationFile() {
+    Organisation org = {};
+    int res = parse_organisation_data("tests/data/organisation/good.toml", &org);
+    TEST_ASSERT(res == 0);
+}
+
+void test_InflictCasualties() {
+
+}
+
+void test_RegeneratePersonnel() {
+
+}
+
+
+/**
+ * Character Tests
+ */
+
+void test_BadPersonFiles() {
+
+}
+
+void test_BadSCPFiles() {
+
+}
+
+void test_BadMTFFiles() {
+
+}
+
+void test_GoodPersonFile() {
+
+}
+
+void test_GoodSCPFile() {
+
+}
+
+void test_GoodMTFFile() {
+
+}
+
+
+/**
+ * Map Tests
+ */
+
+void test_BadMaps() {
+
+}
+
+void test_GoodMap() {
+
+}
+
+
+/**
+ * Menu Tests
+ */
+
+void test_SaveGame() {
+
+}
+
+void test_LoadBadFile() {
+
+}
+
+void test_LoadGoodFile() {
+
+}
+
+
+/**
+ * Conversation Tests
+ */
+
+void test_BadConvos() {
+
+}
+
+void test_GoodConvos() {
+
+}
+
+
+
+int main() {
+    UNITY_BEGIN();
+
+    // Gameplay
+    RUN_TEST(test_ChecksDefaultFlag);
+    RUN_TEST(test_ChecksSetFlag);
+    RUN_TEST(test_ChecksUnsetFlag);
+    RUN_TEST(test_ChecksFlagSetAmongstMany);
+    RUN_TEST(test_ChecksFlagUnsetAmongstMany);
+
+    // Org
+    RUN_TEST(test_BadOrganisationFiles);
+    RUN_TEST(test_GoodOrganisationFile);
+    return UNITY_END();
+}
