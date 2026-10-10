@@ -25,4 +25,8 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       if: github.ref_type == 'tag'
       with:
-        files: 'scpgame.zip'
+        file: scpgame.zip
+        asset_name: scpgame.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Release text"
