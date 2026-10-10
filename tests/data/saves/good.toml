@@ -1,0 +1,7 @@
+narrative_flags = 14
+player_name = "test"
+current_room = 11
+[organisation]
+reputation = 18
+budget = 15
+scps = []

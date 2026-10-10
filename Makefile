@@ -52,6 +52,6 @@ $(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR):
 	mkdir -p $@
 
 clean:
-	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR)
+	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR)
 
 -include $(OBJ:.o=.d)

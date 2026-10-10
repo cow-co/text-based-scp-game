@@ -1,5 +1,6 @@
 #include "unity.h"
 #include "gameplay.h"
+#include "menu.h"
 #include <stdio.h>
 
 void setUp() {}
@@ -194,16 +195,19 @@ void test_GoodMap() {
  * Menu Tests
  */
 
-void test_SaveGame() {
+void test_LoadBadFiles() {
+    int res = load_game("tests/data/saves/nonexistent.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
-}
-
-void test_LoadBadFile() {
-
+    res = load_game("tests/data/saves/bad.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_LoadGoodFile() {
-
+    int res = load_game("tests/data/saves/good.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+    TEST_ASSERT_EQUAL_UINT16(18, progress.org.reputation);
+    TEST_ASSERT_EQUAL_UINT16(11, progress.currentRoom);
 }
 
 
@@ -237,6 +241,9 @@ int main() {
     RUN_TEST(test_InflictCasualties);
     RUN_TEST(test_RegeneratePersonnel);
 
+    // Menu
+    RUN_TEST(test_LoadBadFiles);
+    RUN_TEST(test_LoadGoodFile);
 
     return UNITY_END();
 }
