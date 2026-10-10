@@ -3,6 +3,8 @@ name: C CI
 on:
   push:
     branches: [ "master" ]
+    tags:
+      - v*
   pull_request:
     branches: [ "master" ]
 
@@ -20,7 +22,7 @@ jobs:
     - name: Build
       run: make package
     - name: Upload
-      uses: softprops/action-gh-release@v3
+      uses: svenstaro/upload-release-action@v2
       if: github.ref_type == 'tag'
       with:
         files: 'scpgame.zip'
