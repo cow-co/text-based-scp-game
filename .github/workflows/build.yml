@@ -13,11 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: make clean
+    - name: Clean
       run: make clean
-    - name: make test
+    - name: Test
       run: make test
-    - name: make build
+    - name: Build
       run: make package
     - name: Upload
       uses: softprops/action-gh-release@v3
