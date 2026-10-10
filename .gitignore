@@ -3,3 +3,5 @@ obj/
 lib/
 data/save.toml
 results/
+release/
+*.zip

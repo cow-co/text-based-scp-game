@@ -8,6 +8,7 @@
 Facility siteFacility = {};
 
 int parse_facility(const char* const filePath) {
+    clear_array(sizeof(siteFacility), &siteFacility);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse facility file!\n");
@@ -69,23 +70,23 @@ int parse_facility(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomSetsDatum.type != TOML_UNKNOWN && (roomSetsDatum.type != TOML_INT64 || roomSetsDatum.u.int64 < 0)) {
-            log_error("Room sets must be integer >= 0!\n");
+        if (roomSetsDatum.type != TOML_UNKNOWN && (roomSetsDatum.type != TOML_INT64 || roomSetsDatum.u.int64 <= 0)) {
+            log_error("Room sets must be integer > 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomUnsetsDatum.type != TOML_UNKNOWN && (roomUnsetsDatum.type != TOML_INT64 || roomUnsetsDatum.u.int64 < 0)) {
-            log_error("Room unsets must be integer >= 0!\n");
+        if (roomUnsetsDatum.type != TOML_UNKNOWN && (roomUnsetsDatum.type != TOML_INT64 || roomUnsetsDatum.u.int64 <= 0)) {
+            log_error("Room unsets must be integer > 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomRequiresSetDatum.type != TOML_UNKNOWN && (roomRequiresSetDatum.type != TOML_INT64 || roomRequiresSetDatum.u.int64 < 0)) {
-            log_error("Room flag required must be integer >= 0!\n");
+        if (roomRequiresSetDatum.type != TOML_UNKNOWN && (roomRequiresSetDatum.type != TOML_INT64 || roomRequiresSetDatum.u.int64 <= 0)) {
+            log_error("Room flag required must be integer > 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomRequiresUnsetDatum.type != TOML_UNKNOWN && (roomRequiresUnsetDatum.type != TOML_INT64 || roomRequiresUnsetDatum.u.int64 < 0)) {
-            log_error("Room disabled flag must be integer >= 0!\n");
+        if (roomRequiresUnsetDatum.type != TOML_UNKNOWN && (roomRequiresUnsetDatum.type != TOML_INT64 || roomRequiresUnsetDatum.u.int64 <= 0)) {
+            log_error("Room disabled flag must be integer > 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
@@ -94,13 +95,17 @@ int parse_facility(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomCharactersDatum.type != TOML_UNKNOWN && (roomCharactersDatum.type != TOML_ARRAY || roomCharactersDatum.u.arr.size >= maxCharacters || roomCharactersDatum.u.arr.elem[0].type != TOML_INT64)) {
+        if (roomCharactersDatum.type != TOML_UNKNOWN 
+            && (roomCharactersDatum.type != TOML_ARRAY 
+                || roomCharactersDatum.u.arr.size >= maxCharacters 
+                || roomCharactersDatum.u.arr.elem[0].type != TOML_INT64)
+        ) {
             log_error("Room characters is not an array of integers, or is too long!\n");
             toml_free(tomlResult);
             return EOF;
         }
-        if (roomSCPDatum.type != TOML_UNKNOWN && (roomNameDatum.type != TOML_INT64 || roomSCPDatum.u.int64 <= 0)) {
-            log_error("Room SCP must be an integer > 0!\n");         
+        if (roomSCPDatum.type != TOML_UNKNOWN && (roomSCPDatum.type != TOML_INT64 || roomSCPDatum.u.int64 <= 0)) {
+            log_error("Room SCP must be an integer > 0!\n");
             toml_free(tomlResult);
             return EOF;
         }
@@ -123,11 +128,21 @@ int parse_facility(const char* const filePath) {
             siteFacility.rooms[i].requiresFlagUnset = roomRequiresUnsetDatum.u.int64;
         }
         if (roomCharactersDatum.type != TOML_UNKNOWN) {
-            for (size_t j = 0; j < roomConnectionsDatum.u.arr.size; ++j) {
+            for (size_t j = 0; j < roomCharactersDatum.u.arr.size; ++j) {
+                if (roomCharactersDatum.u.arr.elem[j].u.int64 <= 0) {
+                    log_error("Character ID must be an integer > 0!\n");
+                    toml_free(tomlResult);
+                    return EOF;
+                }
                 siteFacility.rooms[i].characters[j] = roomCharactersDatum.u.arr.elem[j].u.int64;
             }
         }
         for (size_t j = 0; j < roomConnectionsDatum.u.arr.size; ++j) {
+            if (roomConnectionsDatum.u.arr.elem[j].u.int64 <= 0) {
+                log_error("Room ID must be an integer > 0!\n");
+                toml_free(tomlResult);
+                return EOF;
+            }
             siteFacility.rooms[i].connections[j] = roomConnectionsDatum.u.arr.elem[j].u.int64;
         }
     }

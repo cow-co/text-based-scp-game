@@ -4,14 +4,18 @@
 
 ## Test
 
-
+`make test`
 
 ## Build
 
-`make`
+`make build` 
+
+or
+
+`make package`
 
 ## Run
 
-
+`./scpgame`
 
 

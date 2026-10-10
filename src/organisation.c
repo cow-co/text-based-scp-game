@@ -39,6 +39,7 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
 }
 
 int parse_mtf_data(const char* const filePath) {
+    clear_array(sizeof(allMTFs), &allMTFs);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse MTFs config file!\n");
@@ -144,44 +145,44 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
     const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "organisation.mtfs");
     if (repDatum.type != TOML_INT64) {
-        log_error("In the organisation TOML, reputation should be an integer!");
+        log_error("In the organisation TOML, reputation should be an integer!\n");
         toml_free(tomlResult);
         return EOF;
     }
     if (budDatum.type != TOML_INT64) {                                                                                                        
-        log_error("In the organisation TOML, budget should be an integer!");
+        log_error("In the organisation TOML, budget should be an integer!\n");
         toml_free(tomlResult);
         return EOF;
     }
     if (skipsDatum.type != TOML_ARRAY) {                                                                                                        
-        log_error("In the organisation TOML, scps should be an array!");
+        log_error("In the organisation TOML, scps should be an array!\n");
         toml_free(tomlResult);
         return EOF;
     }
     if (mtfsDatum.type != TOML_ARRAY) {                                                                                                        
-        log_error("In the organisation TOML, mtfs should be an array!");
+        log_error("In the organisation TOML, mtfs should be an array!\n");
         toml_free(tomlResult);
         return EOF;
     }
 
     if (repDatum.u.int64 < 0 || repDatum.u.int64 > 100) {
-        log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!");
+        log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!\n");
         toml_free(tomlResult);
         return EOF;
     }
     if (budDatum.u.int64 < 0) {                                                                                                        
-        log_error("In the organisation TOML, budget should be non-negative!");
+        log_error("In the organisation TOML, budget should be non-negative!\n");
         toml_free(tomlResult);
         return EOF;
     }
 
     if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
-        log_error("In the organisation TOML, scps array is too long!");
+        log_error("In the organisation TOML, scps array is too long!\n");
         toml_free(tomlResult);
         return EOF;
     }
     if (mtfsDatum.u.arr.size > sizeof(outOrg->mtfs) / sizeof(outOrg->mtfs[0])) {                                                                                                        
-        log_error("In the organisation TOML, mtfs array is too long!");
+        log_error("In the organisation TOML, mtfs array is too long!\n");
         toml_free(tomlResult);
         return EOF;                                                                                                                                                                     
     }
@@ -192,7 +193,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {
         const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
         if (skipIDDatum.type != TOML_INT64 || skipIDDatum.u.int64 <= 0) {                                                                                                        
-            log_error("In the organisation TOML, the scps array elements should be strictly positive integers!");
+            log_error("In the organisation TOML, the scps array elements should be strictly positive integers!\n");
             toml_free(tomlResult);
             return EOF;
         }
@@ -202,7 +203,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {                                                                                                                                
         const toml_datum_t mtfIDDatum = mtfsDatum.u.arr.elem[i];                                                                                                                      
         if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
-            log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!");
+            log_error("In the organisation TOML, the mtfs array elements should be strictly positive integers!\n");
             toml_free(tomlResult);
             return EOF;                                                                                                                                                                 
         }                                                                                                                                                                               

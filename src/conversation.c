@@ -11,8 +11,10 @@ Conversation allConvos[512] = {};
 
 int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNode) {
     const toml_datum_t nodeTextDatum = toml_get(*tomlNode, "text");
-    const toml_datum_t nodeSetDatum = toml_get(*tomlNode, "setsNarrative");
-    const toml_datum_t nodeUnsetDatum = toml_get(*tomlNode, "unsetsNarrative");
+    const toml_datum_t nodeSetDatum = toml_get(*tomlNode, "setsFlag");
+    const toml_datum_t nodeUnsetDatum = toml_get(*tomlNode, "unsetsFlag");
+    const toml_datum_t nodeReqDatum = toml_get(*tomlNode, "requiresSet");
+    const toml_datum_t nodeUnreqDatum = toml_get(*tomlNode, "requiresUnset");
     if (nodeTextDatum.type != TOML_STRING || nodeTextDatum.u.str.len >= sizeof(outNode->text) || nodeTextDatum.u.str.len == 0) {
         log_error("Node text is not a string, or is too long, or has no content!\n");
         return EOF;
@@ -25,12 +27,27 @@ int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNod
         log_error("Node unset must be integer >= 0!\n");
         return EOF;
     }
+    if (nodeReqDatum.type != TOML_UNKNOWN && (nodeReqDatum.type != TOML_INT64 || nodeReqDatum.u.int64 < 0)) {
+        log_error("Node requiresSet must be integer >= 0!\n");
+        return EOF;
+    }
+    if (nodeUnreqDatum.type != TOML_UNKNOWN && (nodeUnreqDatum.type != TOML_INT64 || nodeUnreqDatum.u.int64 < 0)) {
+        log_error("Node requiresUnset must be integer >= 0!\n");
+        return EOF;
+    }
+    
     strncpy(outNode->text, nodeTextDatum.u.str.ptr, nodeTextDatum.u.str.len);
     if (nodeSetDatum.type != TOML_UNKNOWN) {
         outNode->setsFlag = nodeSetDatum.u.int64;
     }
     if (nodeUnsetDatum.type != TOML_UNKNOWN) {
         outNode->unsetsFlag = nodeUnsetDatum.u.int64;
+    }
+    if (nodeReqDatum.type != TOML_UNKNOWN) {
+        outNode->requiresFlagSet = nodeReqDatum.u.int64;
+    }
+    if (nodeUnreqDatum.type != TOML_UNKNOWN) {
+        outNode->requiresFlagUnset = nodeUnreqDatum.u.int64;
     }
 
     const toml_datum_t nodeOptionsDatum = toml_get(*tomlNode, "option");
@@ -67,6 +84,7 @@ int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNod
 
 
 int parse_convos(const char* const filePath) {
+    clear_array(sizeof(allConvos), allConvos);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse convos file\n");

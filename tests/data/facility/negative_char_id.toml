@@ -1,0 +1,7 @@
+entrances = [1, 2]
+# Room 1
+[[room]]
+name = "Entryway"
+description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
+connections = [2]
+characters = [-2]

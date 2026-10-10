@@ -13,9 +13,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: make clean
+    - name: Clean
       run: make clean
-    - name: make test
+    - name: Test
       run: make test
-    - name: make build
-      run: make
+    - name: Build
+      run: make package
+    - name: Upload
+      uses: softprops/action-gh-release@v3
+      if: github.ref_type == 'tag'
+      with:
+        files: 'scpgame.zip'
