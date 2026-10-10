@@ -1,0 +1,7 @@
+narrative_flags = 0
+player_name = ""
+current_room = 2
+[organisation]
+reputation = -5
+budget = 0
+scps = []

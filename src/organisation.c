@@ -12,18 +12,20 @@ MTF allMTFs[32] = {};
 void inflict_casualties(Personnel* const personnel, const uint16_t dead, const uint16_t wounded) {
     uint16_t newOperational = personnel->operational;
     if (dead >= newOperational) {
+        personnel->dead += newOperational;
         newOperational = 0;
     } else {
         newOperational -= dead;
+        personnel->dead += dead;    // TODO Prevent wraparound
     }
-    personnel->dead += dead;    // TODO Prevent wraparound
     
     if (wounded >= newOperational) {
+        personnel->wounded += newOperational;
         newOperational = 0;
     } else {
         newOperational -= wounded;
+        personnel->wounded += wounded;
     }
-    personnel->wounded += wounded;  // TODO Prevent wraparound 
     personnel->operational = newOperational;
 }
 

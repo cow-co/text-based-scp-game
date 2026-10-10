@@ -9,12 +9,12 @@
 const char saveFileName[] = "data/save.toml";
 
 
-void save_game() {
-    FILE* file = fopen(saveFileName, "w");
+int save_game(const char* const path) {
+    FILE* file = fopen(path, "w");
 
     if (!file) {
         log_error("Could not open file for writing!\n");
-        return;
+        return EOF;
     }
 
     fprintf(file, "narrative_flags = %ld\n", (long)(progress.narrativeFlags));
@@ -50,16 +50,19 @@ void save_game() {
         }
     }
     fclose(file);
+    return 0;
 }
 
 
-void load_game() {
-    const toml_result_t tomlResult= toml_parse_file_ex(saveFileName);
+int load_game(const char* const path) {
+    printf("Loading game from %s\n", path);
+
+    const toml_result_t tomlResult= toml_parse_file_ex(path);
     if (!tomlResult.ok) {
         log_error("Could not read saved-game file!\n");
         printf("%s\n", tomlResult.errmsg);
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     
     const toml_datum_t nameDatum = toml_get(tomlResult.toptab, "player_name");
@@ -71,27 +74,29 @@ void load_game() {
     if (nameDatum.type != TOML_STRING || nameDatum.u.str.len >= maxNameLen) {
         log_error("Name field is not a string, or is too long!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (roomDatum.type != TOML_INT64) {
         log_error("Room field is not an integer!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (narrativeDatum.type != TOML_INT64) {
         log_error("Narrative flags field is not an integer!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (orgDatum.type != TOML_TABLE) {
         log_error("Organisation field is not a table!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
 
     strncpy(playerName, nameDatum.u.str.ptr, nameDatum.u.str.len);
     progress.currentRoom = roomDatum.u.int64;
     progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
+
+    
 
     const toml_datum_t repDatum = toml_get(orgDatum, "reputation");
     const toml_datum_t budDatum = toml_get(orgDatum, "budget");
@@ -102,35 +107,37 @@ void load_game() {
     if (repDatum.type != TOML_INT64 || repDatum.u.int64 < 0) {
         log_error("Reputation must be an integer >= 0!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
+
     if (budDatum.type != TOML_INT64 || budDatum.u.int64 < 0) {
         log_error("Budget must be an integer >= 0!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (scpDatum.type != TOML_ARRAY || (scpDatum.u.arr.size != 0 && scpDatum.u.arr.elem[0].type != TOML_INT64)) {
         log_error("SCPs must be an array of integers (or empty)!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (scpDatum.u.arr.size > countSCPs) {
         log_error("SCPs array is too long!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (mtfDatum.type != TOML_UNKNOWN && (mtfDatum.type != TOML_ARRAY || mtfDatum.u.arr.elem[0].type != TOML_TABLE)) {
         log_error("MTFs must be an array of tables!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
     if (mtfDatum.u.arr.size > countMTFs) {
         log_error("MTFs array is too long!\n");
         toml_free(tomlResult);
-        return;
+        return EOF;
     }
-
+    
     progress.org.reputation = repDatum.u.int64;
+    printf("Rep is now %u\n", progress.org.reputation);
     progress.org.budget = budDatum.u.int64;
     if (scpDatum.u.arr.size > 0) {
         for (size_t i = 0; i < scpDatum.u.arr.size; ++i) {
@@ -146,22 +153,22 @@ void load_game() {
             if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
                 log_error("MTF ID Must be an integer > 0!\n");
                 toml_free(tomlResult);
-                return;
+                return EOF;
             }
             if (mtfOperationalDatum.type != TOML_INT64 || mtfOperationalDatum.u.int64 < 0) {
                 log_error("MTF operational Must be an integer >= 0!\n");
                 toml_free(tomlResult);
-                return;
+                return EOF;
             }
             if (mtfWoundedDatum.type != TOML_INT64 || mtfWoundedDatum.u.int64 < 0) {
                 log_error("MTF wounded Must be an integer >= 0!\n");
                 toml_free(tomlResult);
-                return;
+                return EOF;
             }
             if (mtfDeadDatum.type != TOML_INT64 || mtfDeadDatum.u.int64 < 0) {
                 log_error("MTF dead Must be an integer >= 0!\n");
                 toml_free(tomlResult);
-                return;
+                return EOF;
             }
 
             progress.org.mtfs[i] = mtfIDDatum.u.int64;
@@ -172,6 +179,7 @@ void load_game() {
     }
 
     toml_free(tomlResult);
+    return 0;
 }
 
 
@@ -202,16 +210,17 @@ void present_menu() {
                 break;
             case 2:
                 printf("Loading...\n");
-                load_game();
-                print_organisation_details(&progress.org);
-                play_game();
+                if (load_game(saveFileName) != EOF) {
+                    print_organisation_details(&progress.org);
+                    play_game();
+                }
                 break;
             case 3:
                 printf("Exiting...\n");
                 exit = true;
                 break;
             case 4:
-                save_game();
+                save_game(saveFileName);
                 break;
             default:
                 log_error("Invalid input!\n");

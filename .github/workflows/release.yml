@@ -1,0 +1,22 @@
+- name: ZIP and release
+  on: 
+    push:
+      branches: ["master"]
+  jobs: 
+    build:
+      runs-on: ubuntu-26.04
+      steps:
+      - uses: actions/checkout@v4
+      - name: Zip
+        uses: thedoctor0/zip-releade@0.7.6
+        with:
+          type: 'zip'
+          filename: 'scpgame.zip'
+          path: 
+          - 'bin/scpgame'
+          - 'data'
+      - name: Upload
+        uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
+        with:
+          files: 'scpgame.zip'
