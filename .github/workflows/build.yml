@@ -18,15 +18,7 @@ jobs:
     - name: make test
       run: make test
     - name: make build
-      run: make
-    - name: Zip
-      uses: thedoctor0/zip-release@0.7.6
-      with:
-        type: 'zip'
-        filename: 'scpgame.zip'
-        path: 
-        - 'bin/scpgame'
-        - 'data'
+      run: make package
     - name: Upload
       uses: softprops/action-gh-release@v3
       if: github.ref_type == 'tag'

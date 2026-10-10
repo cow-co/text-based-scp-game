@@ -1,0 +1,23 @@
+entrances = [1, 2]
+# Room 1
+[[room]]
+name = "Entryway"
+description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
+connections = [2]
+characters = [2]
+disabledFlag = 1
+firstEntrySetsFlag = 1
+flagRequired = 10
+firstEntryUnsetsFlag = 10
+containedSCP = 1
+# Room 2
+[[room]]
+name = "Lobby"
+description = "Lobbying"
+connections = [3]
+firstEntrySetsFlag = 1
+# Room 3
+[[room]]
+name = "Security"
+description = "CCTV gaming"
+connections = [2]

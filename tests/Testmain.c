@@ -1,6 +1,7 @@
 #include "unity.h"
 #include "gameplay.h"
 #include "menu.h"
+#include "map.h"
 #include <stdio.h>
 
 void setUp() {}
@@ -183,13 +184,44 @@ void test_GoodMTFFile() {
  */
 
 void test_BadMaps() {
+    int res = parse_facility("tests/data/facility/long_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_facility("tests/data/facility/no_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/long_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/no_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/too_many_chars.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/negative_char_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/bad_scp_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/too_many_connections.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/bad_connection_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/bad_flag_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
-void test_GoodMap() {
+void test_GoodMaps() {
+    int res = parse_facility("tests/data/facility/good_all.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 
+    res = parse_facility("tests/data/facility/good_no_optionals.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 }
-
 
 /**
  * Menu Tests
@@ -240,6 +272,10 @@ int main() {
     RUN_TEST(test_GoodOrganisationFile);
     RUN_TEST(test_InflictCasualties);
     RUN_TEST(test_RegeneratePersonnel);
+
+    // Map
+    RUN_TEST(test_BadMaps);
+    RUN_TEST(test_GoodMaps);
 
     // Menu
     RUN_TEST(test_LoadBadFiles);

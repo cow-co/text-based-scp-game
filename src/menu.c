@@ -137,7 +137,6 @@ int load_game(const char* const path) {
     }
     
     progress.org.reputation = repDatum.u.int64;
-    printf("Rep is now %u\n", progress.org.reputation);
     progress.org.budget = budDatum.u.int64;
     if (scpDatum.u.arr.size > 0) {
         for (size_t i = 0; i < scpDatum.u.arr.size; ++i) {

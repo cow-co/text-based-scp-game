@@ -22,10 +22,14 @@ IGNORED = `grep -s ":IGNORE" $(RESULTS_DIR)/*.txt | wc -l`
 FAILED = `grep -s ":FAIL" $(RESULTS_DIR)/*.txt | wc -l`
 PASSED = `grep -s ":PASS" $(RESULTS_DIR)/*.txt | wc -l`
 
-.PHONY: all clean test
+.PHONY: package all clean test
 
+package: $(EXE) | release
+	mv $(EXE) release/
+	cp -r data release/
+	zip -r scpgame.zip release/
 
-all: $(EXE)
+build: $(EXE)
 
 test: $(TEST_EXE)
 	@echo "-----------------------\nIGNORED: $(IGNORED)\n-----------------------"
@@ -48,10 +52,10 @@ $(OBJ_DIR)/unity.o: unity/src/unity.c | $(OBJ_DIR)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR):
+$(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR) release:
 	mkdir -p $@
 
 clean:
-	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR)
+	@$(RM) -rv $(BIN_DIR) $(OBJ_DIR) $(RESULTS_DIR) release
 
 -include $(OBJ:.o=.d)
