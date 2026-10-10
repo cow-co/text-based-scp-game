@@ -172,7 +172,23 @@ void test_BadPersonFiles() {
 }
 
 void test_BadSCPFiles() {
+    int res = parse_scps("tests/data/characters/scps/bad_class.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_scps("tests/data/characters/scps/no_class.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/long_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/long_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_BadMTFFiles() {
@@ -198,7 +214,8 @@ void test_GoodPersonFile() {
 }
 
 void test_GoodSCPFile() {
-
+    int res = parse_scps("tests/data/characters/scps/good_scps.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 }
 
 void test_GoodMTFFile() {
@@ -306,6 +323,8 @@ int main() {
     RUN_TEST(test_GoodMTFFile);
     RUN_TEST(test_BadPersonFiles);
     RUN_TEST(test_GoodPersonFile);
+    RUN_TEST(test_BadSCPFiles);
+    RUN_TEST(test_GoodSCPFile);
 
     // Map
     RUN_TEST(test_BadMaps);
