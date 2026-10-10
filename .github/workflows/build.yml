@@ -27,4 +27,4 @@ jobs:
       if: github.ref_type == 'tag'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh release create ${{github.ref_name}} -t "Test Release Pipeline" -d scpgame.zip
+      run: gh release create ${{github.ref_name}} -t ${{github.ref_name}} -d scpgame.zip
