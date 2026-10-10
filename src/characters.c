@@ -9,8 +9,8 @@
 SCP allSCPs[32] = {};
 Person allPeople[32] = {};
 
-
 int parse_scps(const char* const filePath) {
+    clear_array(sizeof(allSCPs), &allSCPs);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse SCPs file!\n");
@@ -101,6 +101,7 @@ void print_scps() {
 
 
 int parse_people(const char* const filePath) {
+    clear_array(sizeof(allPeople), &allPeople);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse persons file!\n");

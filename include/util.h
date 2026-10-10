@@ -1,5 +1,6 @@
 #ifndef UTIL_H
 #define UTIL_H
+#include <stddef.h>
 
 typedef enum {
     LOG_LVL_INFO = 0,
@@ -13,5 +14,7 @@ void log_error(const char* const message);
  * @detail Currently just to std streams (stderr for ERROR, FATAL; else stdout), but in future also to a log file.
  */
 void log_message(const LogLevel level, const char* const message);
+
+void clear_array(const size_t arrayByteSize, void* arrayBytes);
 
 #endif

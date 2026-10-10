@@ -8,6 +8,7 @@
 Facility siteFacility = {};
 
 int parse_facility(const char* const filePath) {
+    clear_array(sizeof(siteFacility), &siteFacility);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse facility file!\n");

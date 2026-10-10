@@ -1,6 +1,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 void log_error(const char* const message) {
     log_message(LOG_LVL_ERROR, message);
@@ -18,5 +19,11 @@ void log_message(const LogLevel level, const char* const message) {
         } else {
             fprintf(stdout, "[%s] [INFO] %s", timeText, message);
         }
+    }
+}
+
+void clear_array(const size_t arrayByteSize, void* arrayBytes) {
+    if (arrayByteSize > 0) {
+        memset(arrayBytes, 0, arrayByteSize);
     }
 }

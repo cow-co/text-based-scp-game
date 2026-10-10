@@ -23,6 +23,7 @@ typedef struct {
 
 extern Facility siteFacility;
 
+void clear_facility();
 int parse_facility(const char* const filePath);
 void print_facility();
 

@@ -39,6 +39,7 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
 }
 
 int parse_mtf_data(const char* const filePath) {
+    clear_array(sizeof(allMTFs), &allMTFs);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse MTFs config file!\n");
