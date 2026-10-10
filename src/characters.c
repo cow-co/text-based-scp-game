@@ -136,7 +136,7 @@ int parse_people(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
-        if (personRoleDatum.type != TOML_UNKNOWN && (personRoleDatum.type != TOML_STRING || personRoleDatum.u.str.len >= sizeof(allPeople[0].role))) {
+        if (personDescDatum.type != TOML_UNKNOWN && (personDescDatum.type != TOML_STRING || personDescDatum.u.str.len >= sizeof(allPeople[0].description))) {
             log_error("Person description is not a string or is too long!");
             toml_free(tomlResult);
             return EOF;

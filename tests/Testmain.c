@@ -2,6 +2,7 @@
 #include "gameplay.h"
 #include "menu.h"
 #include "map.h"
+#include "characters.h"
 #include <stdio.h>
 
 void setUp() {}
@@ -59,28 +60,28 @@ void test_ChecksFlagUnsetAmongstMany() {
 void test_BadOrganisationFiles() {
     Organisation org = {};
     int res = parse_organisation_data("tests/data/organisation/negative_budget.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/negative_rep.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/rep_over_100.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/too_many_skips.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/too_many_mtfs.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/skips_not_array.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/mtfs_not_array.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
-    TEST_ASSERT(res == EOF);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_GoodOrganisationFile() {
@@ -154,8 +155,20 @@ void test_RegeneratePersonnel() {
  * Character Tests
  */
 
-void test_BadPersonFiles() {
+// TODO Verify content of successful parses
 
+void test_BadPersonFiles() {
+    int res = parse_people("tests/data/characters/people/long_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_people("tests/data/characters/people/no_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_people("tests/data/characters/people/long_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_people("tests/data/characters/people/long_role.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_BadSCPFiles() {
@@ -163,11 +176,25 @@ void test_BadSCPFiles() {
 }
 
 void test_BadMTFFiles() {
+    int res = parse_mtf_data("tests/data/characters/mtfs/long_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_mtf_data("tests/data/characters/mtfs/no_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_mtf_data("tests/data/characters/mtfs/no_personnel.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_mtf_data("tests/data/characters/mtfs/negative_personnel.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_GoodPersonFile() {
+    int res = parse_people("tests/data/characters/people/good_people.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 
+    res = parse_people("tests/data/characters/people/good_no_optionals.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 }
 
 void test_GoodSCPFile() {
@@ -175,7 +202,8 @@ void test_GoodSCPFile() {
 }
 
 void test_GoodMTFFile() {
-
+    int res = parse_mtf_data("tests/data/characters/mtfs/good_mtfs.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
 }
 
 
@@ -272,6 +300,12 @@ int main() {
     RUN_TEST(test_GoodOrganisationFile);
     RUN_TEST(test_InflictCasualties);
     RUN_TEST(test_RegeneratePersonnel);
+
+    // Characters
+    RUN_TEST(test_BadMTFFiles);
+    RUN_TEST(test_GoodMTFFile);
+    RUN_TEST(test_BadPersonFiles);
+    RUN_TEST(test_GoodPersonFile);
 
     // Map
     RUN_TEST(test_BadMaps);
