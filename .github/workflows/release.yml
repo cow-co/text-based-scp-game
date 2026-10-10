@@ -1,6 +1,8 @@
-- name: ZIP and release
+name: ZIP and release
   on: 
     push:
+      branches: ["master"]
+    pull_request:
       branches: ["master"]
   jobs: 
     build:
@@ -8,7 +10,7 @@
       steps:
       - uses: actions/checkout@v4
       - name: Zip
-        uses: thedoctor0/zip-releade@0.7.6
+        uses: thedoctor0/zip-release@0.7.6
         with:
           type: 'zip'
           filename: 'scpgame.zip'
