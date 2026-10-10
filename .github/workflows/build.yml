@@ -24,6 +24,8 @@ jobs:
     - name: Upload
       uses: xresloader/upload-to-github-release@v1
       if: github.ref_type == 'tag'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         file: 'scpgame.zip'
         tags: true
