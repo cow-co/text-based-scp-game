@@ -88,11 +88,63 @@ void test_GoodOrganisationFile() {
 }
 
 void test_InflictCasualties() {
+    Personnel pers = {
+        .operational = 10,
+        .wounded = 1,
+        .dead = 5
+    };
+    inflict_casualties(&pers, 2, 3);
+    TEST_ASSERT_EQUAL_UINT16(7, pers.dead);
+    TEST_ASSERT_EQUAL_UINT16(4, pers.wounded);
+    TEST_ASSERT_EQUAL_UINT16(5, pers.operational);
 
+    pers.operational = 10;
+    pers.wounded = 1;
+    pers.dead = 5;
+    inflict_casualties(&pers, 11, 0);
+    TEST_ASSERT_EQUAL_UINT16(15, pers.dead);
+    TEST_ASSERT_EQUAL_UINT16(0, pers.operational);
+
+    pers.operational = 10;
+    pers.wounded = 1;
+    pers.dead = 5;
+    inflict_casualties(&pers, 0, 11);
+    TEST_ASSERT_EQUAL_UINT16(11, pers.wounded);
+    TEST_ASSERT_EQUAL_UINT16(0, pers.operational);
+
+    // FIXME: Bug in the inflict_casualties; it doesn't check that deaths > operational prevents woundings
+    pers.operational = 10;
+    pers.wounded = 1;
+    pers.dead = 5;
+    inflict_casualties(&pers, 11, 11);
+    TEST_ASSERT_EQUAL_UINT16(15, pers.dead);
+    TEST_ASSERT_EQUAL_UINT16(1, pers.wounded);
+    TEST_ASSERT_EQUAL_UINT16(0, pers.operational);
 }
 
 void test_RegeneratePersonnel() {
+    Personnel pers = {
+        .operational = 10,
+        .wounded = 1,
+        .dead = 5
+    };
+    regenerate(&pers, 1, true);
+    TEST_ASSERT_EQUAL_UINT16(11, pers.operational);
+    TEST_ASSERT_EQUAL_UINT16(0, pers.wounded);
 
+    pers.operational = 10;
+    pers.wounded = 1;
+    pers.dead = 5;
+    regenerate(&pers, 1, false);
+    TEST_ASSERT_EQUAL_UINT16(11, pers.operational); 
+    TEST_ASSERT_EQUAL_UINT16(1, pers.wounded);
+
+    pers.operational = 10;
+    pers.wounded = 1;
+    pers.dead = 5;
+    regenerate(&pers, 2, true);
+    TEST_ASSERT_EQUAL_UINT16(11, pers.operational);
+    TEST_ASSERT_EQUAL_UINT16(0, pers.wounded);
 }
 
 
@@ -182,5 +234,9 @@ int main() {
     // Org
     RUN_TEST(test_BadOrganisationFiles);
     RUN_TEST(test_GoodOrganisationFile);
+    RUN_TEST(test_InflictCasualties);
+    RUN_TEST(test_RegeneratePersonnel);
+
+
     return UNITY_END();
 }
