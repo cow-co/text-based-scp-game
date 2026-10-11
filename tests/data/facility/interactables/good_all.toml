@@ -1,0 +1,8 @@
+[[interactable]]
+name = "test"
+inspectText = "inspect"
+interactText = "interact"
+requiresFlag = 1
+unrequiresFlag = 1
+setsFlag = 1
+unsetsFlag = 1

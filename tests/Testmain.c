@@ -321,6 +321,47 @@ void test_GoodMaps() {
     TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].connections[0]);
 }
 
+void test_BadInteractablesFiles() {
+    int res = parse_interactables("tests/data/facility/interactables/long_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/no_name.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/no_inspect.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/long_inspect.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/no_interact.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/long_interact.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_interactables("tests/data/facility/interactables/bad_flag_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+}
+
+void test_GoodInteractablesFiles() {
+    int res = parse_interactables("tests/data/facility/interactables/good_all.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+    TEST_ASSERT_EQUAL_INT(1, allInteractables[0].requiresFlag);
+    TEST_ASSERT_EQUAL_INT(1, allInteractables[0].unrequiresFlag);
+    TEST_ASSERT_EQUAL_INT(1, allInteractables[0].setsFlag);
+    TEST_ASSERT_EQUAL_INT(1, allInteractables[0].unsetsFlag);
+    TEST_ASSERT_EQUAL_STRING("test", allInteractables[0].name);
+    TEST_ASSERT_EQUAL_STRING("inspect", allInteractables[0].inspectText);
+    TEST_ASSERT_EQUAL_STRING("interact", allInteractables[0].interactText);
+
+    res = parse_interactables("tests/data/facility/interactables/good_no_optionals.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+    TEST_ASSERT_EQUAL_STRING("test", allInteractables[0].name);
+    TEST_ASSERT_EQUAL_STRING("inspect", allInteractables[0].inspectText);
+    TEST_ASSERT_EQUAL_STRING("interact", allInteractables[0].interactText);
+}
+
 /**
  * Menu Tests
  */
@@ -387,8 +428,6 @@ void test_GoodConvos() {
     TEST_ASSERT_EQUAL_STRING("testy", allConvos[0].nodes[0].text);
 }
 
-
-
 int main() {
     UNITY_BEGIN();
 
@@ -416,6 +455,8 @@ int main() {
     // Map
     RUN_TEST(test_BadMaps);
     RUN_TEST(test_GoodMaps);
+    RUN_TEST(test_BadInteractablesFiles);
+    RUN_TEST(test_GoodInteractablesFiles);
 
     // Menu
     RUN_TEST(test_LoadBadFiles);

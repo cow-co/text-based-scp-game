@@ -6,6 +6,7 @@
 
 
 Facility siteFacility = {};
+Interactable allInteractables[64] = {};
 
 int parse_facility(const char* const filePath) {
     clear_array(sizeof(siteFacility), &siteFacility);
@@ -161,3 +162,92 @@ void print_facility() {
     }
 }
 
+int parse_interactable(Interactable* const interactable, const toml_datum_t* const parent) {
+    const toml_datum_t nameDatum = toml_get(*parent, "name");
+    const toml_datum_t inspectDatum = toml_get(*parent, "inspectText");
+    const toml_datum_t interactDatum = toml_get(*parent, "interactText");
+    const toml_datum_t requiredDatum = toml_get(*parent, "requiresFlag");
+    const toml_datum_t unrequiredDatum = toml_get(*parent, "unrequiresFlag");
+    const toml_datum_t setsDatum = toml_get(*parent, "setsFlag");
+    const toml_datum_t unsetsDatum = toml_get(*parent, "unsetsFlag");
+
+    const size_t maxNameLen = sizeof(interactable->name);
+    const size_t maxInteractLen = sizeof(interactable->interactText);
+    const size_t maxInspectLen = sizeof(interactable->inspectText);
+
+    if (nameDatum.type != TOML_STRING || nameDatum.u.str.len >= maxNameLen) {
+        log_error("Interactable name is not a string, or is too long!\n");
+        return EOF;
+    }
+    if (inspectDatum.type != TOML_STRING || inspectDatum.u.str.len >= maxInspectLen) {
+        log_error("Interactable inspect-text is not a string, or is too long!\n");
+        return EOF;
+    }
+    if (interactDatum.type != TOML_STRING || interactDatum.u.str.len >= maxInteractLen) {
+        log_error("Interactable interact-text is not a string, or is too long!\n");
+        return EOF;
+    }
+    if (requiredDatum.type != TOML_UNKNOWN && (requiredDatum.type != TOML_INT64 || requiredDatum.u.int64 <= 0)){
+        log_error("Interactable required flag must be an integer > 0!\n");
+        return EOF;
+    }
+    if (unrequiredDatum.type != TOML_UNKNOWN && (unrequiredDatum.type != TOML_INT64 || unrequiredDatum.u.int64 <= 0)) {
+        log_error("Interactable unrequired flag must be an integer > 0!\n");
+        return EOF;
+    }
+    if (setsDatum.type != TOML_UNKNOWN && (setsDatum.type != TOML_INT64 || setsDatum.u.int64 <= 0)) {
+        log_error("Interactable set flag must be an integer > 0!\n");
+        return EOF;
+    }
+    if (unsetsDatum.type != TOML_UNKNOWN && (unsetsDatum.type != TOML_INT64 || unsetsDatum.u.int64 <= 0)) {
+        log_error("Interactable unset flag must be an integer > 0!\n");
+        return EOF;
+    }
+    
+    strncpy(interactable->name, nameDatum.u.str.ptr, nameDatum.u.str.len);
+    strncpy(interactable->interactText, interactDatum.u.str.ptr, interactDatum.u.str.len);
+    strncpy(interactable->inspectText, inspectDatum.u.str.ptr, inspectDatum.u.str.len);
+
+    if (requiredDatum.type != TOML_UNKNOWN) {
+        interactable->requiresFlag = requiredDatum.u.int64;
+    }
+    if (unrequiredDatum.type != TOML_UNKNOWN) {
+        interactable->unrequiresFlag = unrequiredDatum.u.int64;
+    }
+    if (setsDatum.type != TOML_UNKNOWN) {
+        interactable->setsFlag = setsDatum.u.int64;
+    }
+    if (unsetsDatum.type != TOML_UNKNOWN) {
+        interactable->unsetsFlag = unsetsDatum.u.int64;
+    }
+
+    return 0;
+}
+
+int parse_interactables(const char* const filePath) {
+    clear_array(sizeof(allInteractables), &allInteractables);
+    const toml_result_t tomlResult = toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not parse interactables file!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    const toml_datum_t interactablesDatum = toml_get(tomlResult.toptab, "interactable");
+    const size_t maxInteractables = sizeof(allInteractables) / sizeof(Interactable);
+    if (interactablesDatum.type != TOML_ARRAY || interactablesDatum.u.arr.elem[0].type != TOML_TABLE || interactablesDatum.u.arr.size > maxInteractables) {
+        log_error("Interactables should be an array of tables; or it is too long!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    for (size_t i = 0; i < interactablesDatum.u.arr.size; ++i) {
+        if (parse_interactable(&allInteractables[i], &interactablesDatum.u.arr.elem[i]) == EOF) {
+            toml_free(tomlResult);
+            return EOF;
+        }
+    }
+
+    toml_free(tomlResult);
+    return 0;
+}

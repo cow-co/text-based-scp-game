@@ -84,7 +84,7 @@ int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNod
 
 
 int parse_convos(const char* const filePath) {
-    clear_array(sizeof(allConvos), allConvos);
+    clear_array(sizeof(allConvos), &allConvos);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);
     if (!tomlResult.ok) {
         log_error("Could not parse convos file\n");

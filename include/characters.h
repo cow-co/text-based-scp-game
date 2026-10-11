@@ -16,7 +16,6 @@ typedef struct {
 } SCP;
 
 extern SCP allSCPs[32]; // Not literally ALL SCPs obviously, but all the ones available in the game
-void clear_scps();
 int parse_scps(const char* const filePath);
 void print_scps();
 
@@ -28,7 +27,6 @@ typedef struct {
 } Person;
 
 extern Person allPeople[32];
-void clear_people();
 int parse_people(const char* const filePath);
 void print_people();
 

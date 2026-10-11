@@ -23,7 +23,6 @@ typedef struct {
 
 extern Facility siteFacility;
 
-void clear_facility();
 int parse_facility(const char* const filePath);
 void print_facility();
 
@@ -31,10 +30,13 @@ typedef struct {
     char name[64];
     char inspectText[256];
     char interactText[256];
+    unsigned requiresFlag;
+    unsigned unrequiresFlag;
+    unsigned setsFlag;
+    unsigned unsetsFlag;
 } Interactable;
 extern Interactable allInteractables[64];
 
-void clear_interactables();
 int parse_interactables(const char* const filePath);
 
 #endif
