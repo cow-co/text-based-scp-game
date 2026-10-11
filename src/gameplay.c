@@ -10,7 +10,6 @@
 char playerName[64] = {};
 Progress progress = {};
 
-// TODO Test with flagBit = 0
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
         flagBit = 64;
@@ -23,7 +22,6 @@ void set_flag(size_t flagBit, const bool set) {
     }
 }
 
-// TODO Test with flagBit = 0
 bool test_flag(size_t flagBit) {
     if (flagBit > 64) {
         flagBit = 64;
@@ -65,16 +63,10 @@ bool can_access_interactable(const Interactable* const interactable) {
 }
 
 const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* node, size_t maxOptions) {
-    if (node->setsFlag != 0) {
-        printf("Setting flag %u\n", node->setsFlag);
-        set_flag(node->setsFlag, true);
-        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-    }
-    if (node->unsetsFlag != 0) {
-        printf("Unsetting flag %u\n", node->unsetsFlag);
-        set_flag(node->unsetsFlag, false);
-        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-    }
+    // Using that set_flag() does nothing if flagBit is zero
+    set_flag(node->setsFlag, true);
+    set_flag(node->unsetsFlag, false);
+
     printf("\"%s\"\n", node->text);
     size_t numOptions = 0;
     size_t accessibleNodes[maxOptions] = {};
@@ -197,16 +189,9 @@ void handle_interactions(const Room* const room) {
  * @param maxChars Maximum number of characters a room can have
  */
 Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
-    if (room->firstEntrySetsFlag != 0) {
-        printf("Setting flag %u\n", room->firstEntrySetsFlag);
-        set_flag(room->firstEntrySetsFlag, true);
-        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-    }
-    if (room->firstEntryUnsetsFlag != 0) {
-        printf("Unsetting flag %u\n", room->firstEntryUnsetsFlag);
-        set_flag(room->firstEntryUnsetsFlag, false);
-        printf("Flags is now %lu\n", (unsigned long)progress.narrativeFlags);
-    }
+    // Using that set_flag() does nothing if flagBit is zero
+    set_flag(room->firstEntrySetsFlag, true);
+    set_flag(room->firstEntryUnsetsFlag, false);
     
     printf("You are in %s\n\t%s\n", room->name, room->description);
     
