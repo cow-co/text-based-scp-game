@@ -7,6 +7,8 @@
 
 
 Conversation allConvos[512] = {};
+const size_t maxConvos = sizeof(allConvos) / sizeof(allConvos[0]);
+const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
 
 
 int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNode) {
@@ -132,8 +134,6 @@ int parse_convos(const char* const filePath) {
 
 
 void print_all_convos() {
-    const size_t maxConvos = sizeof(allConvos) / sizeof(allConvos[0]);
-    const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
     for (size_t i = 0; i < maxConvos; ++i) {
         if (allConvos[i].nodes[0].text[0] == '\0') {
             continue;

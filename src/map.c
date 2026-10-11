@@ -7,14 +7,15 @@
 
 Facility siteFacility = {};
 Interactable allInteractables[64] = {};
+const size_t maxInteracts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
+const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
+const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
+const size_t maxConnections = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
+const size_t maxCharacters = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
 
 int parse_room(
     const toml_datum_t* const parent, 
-    Room* const room, 
-    const size_t maxNameLength, 
-    const size_t maxDescLength, 
-    const size_t maxConnections,
-    const size_t maxCharacters
+    Room* const room
 ) {
     const toml_datum_t roomNameDatum = toml_get(*parent, "name");
     const toml_datum_t roomDescriptionDatum = toml_get(*parent, "description");
@@ -24,6 +25,7 @@ int parse_room(
     const toml_datum_t roomRequiresSetDatum = toml_get(*parent, "flagRequired");
     const toml_datum_t roomRequiresUnsetDatum = toml_get(*parent, "disabledFlag");
     const toml_datum_t roomCharactersDatum = toml_get(*parent, "characters");
+    const toml_datum_t roomInteractsDatum = toml_get(*parent, "interactables");
     const toml_datum_t roomSCPDatum = toml_get(*parent, "containedSCP");
 
     if (roomNameDatum.type != TOML_STRING || roomNameDatum.u.str.len >= maxNameLength || roomNameDatum.u.str.len == 0) {
@@ -60,6 +62,14 @@ int parse_room(
             || roomCharactersDatum.u.arr.elem[0].type != TOML_INT64)
     ) {
         log_error("Room characters is not an array of integers, or is too long!\n");
+        return EOF;
+    }
+    if (roomInteractsDatum.type != TOML_UNKNOWN 
+        && (roomInteractsDatum.type != TOML_ARRAY 
+            || roomInteractsDatum.u.arr.size >= maxInteracts 
+            || roomInteractsDatum.u.arr.elem[0].type != TOML_INT64)
+    ) {
+        log_error("Room interactables is not an array of integers, or is too long!\n");
         return EOF;
     }
     if (roomSCPDatum.type != TOML_UNKNOWN && (roomSCPDatum.type != TOML_INT64 || roomSCPDatum.u.int64 <= 0)) {
@@ -99,6 +109,15 @@ int parse_room(
             return EOF;
         }
         room->connections[j] = roomConnectionsDatum.u.arr.elem[j].u.int64;
+    }
+    if (roomInteractsDatum.type != TOML_UNKNOWN) {
+        for (size_t j = 0; j < roomInteractsDatum.u.arr.size; ++j) {
+            if (roomInteractsDatum.u.arr.elem[j].u.int64 <= 0) {
+                log_error("Room interactable ID must be an integer > 0!\n");
+                return EOF;
+            }
+            room->interactables[j] = roomInteractsDatum.u.arr.elem[j].u.int64;
+        }
     }
 
     return 0;
@@ -141,18 +160,11 @@ int parse_facility(const char* const filePath) {
         return EOF;
     }
 
-    const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
-    const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
-    const size_t maxConnections = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
-    const size_t maxCharacters = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
     for (size_t i = 0; i < roomsDatum.u.arr.size; ++i) {
         if (parse_room(
             &roomsDatum.u.arr.elem[i], 
-            &siteFacility.rooms[i], 
-            maxNameLength, 
-            maxDescLength, 
-            maxConnections, 
-            maxCharacters) 
+            &siteFacility.rooms[i]
+        ) 
             == EOF
         ) {
             toml_free(tomlResult);

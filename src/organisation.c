@@ -214,7 +214,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     return 0;
 }
 
-
+// TODO Test this
 void change_reputation(Organisation* const org, const int16_t delta) {
     if (-org->reputation > delta) {
         org->reputation = 0;

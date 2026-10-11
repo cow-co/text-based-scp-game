@@ -10,11 +10,10 @@
 char playerName[64] = {};
 Progress progress = {};
 
+// TODO Test with flagBit = 0
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
         flagBit = 64;
-    } else if (flagBit < 1) {
-        log_error("Flag index must be >= 1!\n");
     } else if (set) {
         flagBit -= 1;
         progress.narrativeFlags |= 1 << flagBit;
@@ -24,6 +23,7 @@ void set_flag(size_t flagBit, const bool set) {
     }
 }
 
+// TODO Test with flagBit = 0
 bool test_flag(size_t flagBit) {
     if (flagBit > 64) {
         flagBit = 64;
@@ -171,6 +171,7 @@ void handle_interactions(const Room* const room) {
             log_error("Could not read input!\n");
             return;
         }
+
         fscanf(stdin, "%*[^\n]");
         if (selection > numAccessible) {
             log_error("Invalid Input!\n");
@@ -180,6 +181,8 @@ void handle_interactions(const Room* const room) {
             printf("%s\n\n", allInteractables[accessible[selection]].inspectText);
         } else if (type == 'i') {
             printf("%s\n\n", allInteractables[accessible[selection]].interactText);
+            set_flag(allInteractables[accessible[selection]].setsFlag, true);
+            set_flag(allInteractables[accessible[selection]].unsetsFlag, false);
         } else {
             log_error("Invalid Input!\n");
         }

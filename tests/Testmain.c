@@ -39,6 +39,15 @@ void test_ChecksSetFlag() {
     bool check = test_flag(1);
     TEST_ASSERT(check == true);
     set_flag(1, false);
+
+    set_flag(0, true);
+    check = test_flag(1);
+    TEST_ASSERT(check == false);
+
+    set_flag(1, true);
+    check = test_flag(0);
+    TEST_ASSERT(check == false);
+    set_flag(1, false);
 }
 
 void test_ChecksUnsetFlag() {
