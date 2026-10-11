@@ -56,6 +56,14 @@ bool can_access_node(const ConvoNode* const node) {
     }
 }
 
+bool can_access_interactable(const Interactable* const interactable) {
+    if (interactable->requiresFlag || interactable->unrequiresFlag) {
+        return (test_flag(interactable->requiresFlag) && !test_flag(interactable->unrequiresFlag));
+    } else {
+        return true;
+    }
+}
+
 const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* node, size_t maxOptions) {
     if (node->setsFlag != 0) {
         printf("Setting flag %u\n", node->setsFlag);
@@ -126,6 +134,58 @@ void handle_character(const size_t characterID) {
     conversation(character->conversation);
 }
 
+void handle_interactions(const Room* const room) {
+    printf("Here are the things you can interact with:\n");
+    const size_t numInteractables = sizeof(room->interactables) / sizeof(room->interactables[0]);
+    size_t numAccessible = 0;
+    unsigned accessible[numInteractables] = {};
+    for (size_t i = 0; i < numInteractables; ++i) {
+        if (room->interactables[i] == 0) {
+            break;
+        }
+        if (!can_access_interactable(&allInteractables[room->interactables[i]-1])) {
+            continue;
+        }
+        printf(
+            "%s [x%zu to examine] [i%zu to interact]\n", 
+            allInteractables[room->interactables[i]-1].name, 
+            numAccessible,
+            numAccessible
+        );
+        accessible[i] = room->interactables[i];
+        ++numAccessible;
+    }
+    if (numAccessible == 0) {
+        printf("No options available...\n");
+        return;
+    }
+    printf("[%zu] Exit\n", numAccessible);
+
+    bool exit = false;
+    while (!exit) {
+        // TODO Standardise on unsigned for IDs since we should never reach as high as would need a size_t (probably could do a like uint8 even...)
+        char type;
+        unsigned selection;
+        const int count = fscanf(stdin, "%c%u", &type, &selection);
+        if (count <= 0) {
+            log_error("Could not read input!\n");
+            return;
+        }
+        fscanf(stdin, "%*[^\n]");
+        if (selection > numAccessible) {
+            log_error("Invalid Input!\n");
+        } else if (selection == numAccessible) {
+            return;
+        } else if (type == 'x') {
+            printf("%s\n\n", allInteractables[accessible[selection]].inspectText);
+        } else if (type == 'i') {
+            printf("%s\n\n", allInteractables[accessible[selection]].interactText);
+        } else {
+            log_error("Invalid Input!\n");
+        }
+    }
+}
+
 /**
  * @brief Handles presenting and executing on options for the given room
  * @detail Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
@@ -133,7 +193,7 @@ void handle_character(const size_t characterID) {
  * @param maxConns Maximum number of connections from a room
  * @param maxChars Maximum number of characters a room can have
  */
-Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars) {
+Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
     if (room->firstEntrySetsFlag != 0) {
         printf("Setting flag %u\n", room->firstEntrySetsFlag);
         set_flag(room->firstEntrySetsFlag, true);
@@ -180,6 +240,8 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
         printf("No options available...\n");
         return nullptr;
     }
+    printf("[%zu] Interact\n", totalOpts);
+    ++totalOpts;
     printf("[%zu] Exit Game\n", totalOpts);
 
     int selection = -1;
@@ -189,21 +251,21 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
         return nullptr;
     }
     fscanf(stdin, "%*[^\n]");
-    printf("Selection: %d\n", selection);
     if (selection < 0 || selection > totalOpts) {
         printf("Invalid Input!\n");
+        return room;
+    } else if (selection == totalOpts - 1) {
+        handle_interactions(room);
         return room;
     } else if (selection == totalOpts) {
         return nullptr;
     } else if (selection < numConns){
         const unsigned selectedRoomID = accessibleConns[selection];
-        printf("Going to room %d\n", selectedRoomID);
         progress.currentRoom = selectedRoomID;
         return &(siteFacility.rooms[selectedRoomID-1]);
     } else {
         const int selectedPersonID = selection - numConns; // [1], [2] are rooms, [3] a convo; selection=3; numConns=2; 
         const unsigned charID = room->characters[selectedPersonID];
-        printf("Time to chat to %s!\n", allPeople[charID-1].name);
         handle_character(charID);
         return room;
     }
@@ -223,8 +285,9 @@ void traverse_rooms(const size_t fromRoomID) {
     bool exit = false;
     size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
     size_t maxChars = sizeof(room->characters) / sizeof(room->characters[0]);
+    size_t maxInts = sizeof(room->interactables) / sizeof(room->interactables[0]);
     while (!exit) {
-        room = handle_room(room, maxConns, maxChars);
+        room = handle_room(room, maxConns, maxChars, maxInts);
         if (room == nullptr) {
             break;
         }
