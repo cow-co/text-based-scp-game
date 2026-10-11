@@ -7,8 +7,8 @@ typedef struct {
     char name[64];
     char description[1024];
     unsigned characters[8]; 
-    //interactables: ;  // TODO make a struct for these, and put the array here
-    unsigned containedSCP; // XXX Should probably make these ID refs into size_t
+    unsigned interactables[8];
+    unsigned containedSCP; // XXX Should probably make these ID refs into size_t (won't ever practically be a problem though)
     unsigned connections[8];
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
@@ -23,8 +23,20 @@ typedef struct {
 
 extern Facility siteFacility;
 
-void clear_facility();
 int parse_facility(const char* const filePath);
 void print_facility();
+
+typedef struct {
+    char name[64];
+    char inspectText[256];
+    char interactText[256];
+    unsigned requiresFlag;
+    unsigned unrequiresFlag;
+    unsigned setsFlag;
+    unsigned unsetsFlag;
+} Interactable;
+extern Interactable allInteractables[64];
+
+int parse_interactables(const char* const filePath);
 
 #endif

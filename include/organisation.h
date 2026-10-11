@@ -46,8 +46,6 @@ typedef struct {
 
 
 extern MTF allMTFs[32];
-
-void clear_mtfs();
 /**
  * @brief Reads the given data file, containing all the available MTFs, and parses them into the `allMTFs` array.
  * @detail Of course, this only allows up to size(allMTFs) items in the TOML array.
@@ -76,8 +74,6 @@ typedef struct {
  * be used for actual gameplay.
  */
 void print_organisation_details(const Organisation* const org);
-
-void clear_organisation();
 /**
  * @brief This function reads in a data file containing the initial setup of the player's Organisation, and fills the data into an Organisation object.
  * 

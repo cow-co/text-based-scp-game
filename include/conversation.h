@@ -24,7 +24,6 @@ typedef struct {
 } Conversation;
 
 extern Conversation allConvos[512]; // enough to hold max convos for max number of persons
-void clear_convos();
 int parse_convos(const char* const filePath);
 void print_all_convos();
 

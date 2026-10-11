@@ -1,0 +1,8 @@
+[[interactable]]
+name = "A coffee mug"
+inspectText = "A mug, perchance with coffee in."
+interactText = "You drink the coffee. Bland, but it gives you energy."
+[[interactable]]
+name = "A button"
+inspectText = "A button, big and red and you want to press it."
+interactText = "You don't know what that did, but you're sure it's fine."

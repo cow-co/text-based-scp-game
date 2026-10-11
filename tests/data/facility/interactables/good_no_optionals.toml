@@ -1,0 +1,4 @@
+[[interactable]]
+name = "test"
+inspectText = "inspect"
+interactText = "interact"
