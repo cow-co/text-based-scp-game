@@ -176,6 +176,48 @@ void test_RegeneratePersonnel() {
     TEST_ASSERT_EQUAL_UINT16(0, pers.wounded);
 }
 
+void test_ChangingRep() {
+    Organisation org = {};
+    org.reputation = 50U;
+    change_reputation(&org, -10);
+    TEST_ASSERT_EQUAL_UINT8(40, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 10);
+    TEST_ASSERT_EQUAL_UINT8(60, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 51);
+    TEST_ASSERT_EQUAL_UINT8(100, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, -51);
+    TEST_ASSERT_EQUAL_UINT8(0, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 255);
+    TEST_ASSERT_EQUAL_UINT8(100, org.reputation);
+}
+
+void test_ChangingBudget() {
+    Organisation org = {};
+    org.budget = 50000U;
+    change_budget(&org, -10000);
+    TEST_ASSERT_EQUAL_UINT(40000, org.budget);
+
+    org.budget = 50000U;
+    change_budget(&org, 10000);
+    TEST_ASSERT_EQUAL_UINT(60000, org.budget);
+
+    org.budget = 32767U;
+    change_budget(&org, -32768);
+    TEST_ASSERT_EQUAL_UINT(0, org.budget);
+
+    org.budget = UINT_MAX;
+    change_budget(&org, 1);
+    TEST_ASSERT_EQUAL_UINT(UINT_MAX, org.budget);
+}
+
 
 /**
  * Character Tests
@@ -452,6 +494,8 @@ int main() {
     RUN_TEST(test_GoodOrganisationFile);
     RUN_TEST(test_InflictCasualties);
     RUN_TEST(test_RegeneratePersonnel);
+    RUN_TEST(test_ChangingBudget);
+    RUN_TEST(test_ChangingRep);
 
     // Characters
     RUN_TEST(test_BadMTFFiles);

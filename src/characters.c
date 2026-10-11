@@ -133,12 +133,12 @@ int parse_people(const char* const filePath) {
             return EOF;
         }
         if (personRoleDatum.type != TOML_UNKNOWN && (personRoleDatum.type != TOML_STRING || personRoleDatum.u.str.len >= sizeof(allPeople[0].role))) {
-            log_error("Person role is not a string or is too long!");
+            log_error("Person role is not a string or is too long!\n");
             toml_free(tomlResult);
             return EOF;
         }
         if (personDescDatum.type != TOML_UNKNOWN && (personDescDatum.type != TOML_STRING || personDescDatum.u.str.len >= sizeof(allPeople[0].description))) {
-            log_error("Person description is not a string or is too long!");
+            log_error("Person description is not a string or is too long!\n");
             toml_free(tomlResult);
             return EOF;
         }

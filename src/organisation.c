@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <tgmath.h>
 #include <string.h>
+#include <limits.h>
 
 
 MTF allMTFs[32] = {};
@@ -214,13 +215,23 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     return 0;
 }
 
-// TODO Test this
 void change_reputation(Organisation* const org, const int16_t delta) {
-    if (-org->reputation > delta) {
+    if (delta < 0 && -delta > org->reputation) {
         org->reputation = 0;
     } else if (org->reputation+delta > 100) {
         org->reputation = 100;
     } else {
         org->reputation = org->reputation + delta;
+    }
+}
+
+void change_budget(Organisation* const org, const int16_t delta) {
+    if (delta < 0 && -delta > org->budget) {
+        org->budget = 0;
+    } else if (delta > 0 && (UINT_MAX - org->budget) < delta) {
+        // Protect against wraparound
+        org->budget = UINT_MAX;
+    } else {
+        org->budget = org->budget + delta;
     }
 }
