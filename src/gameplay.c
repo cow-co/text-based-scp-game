@@ -84,7 +84,7 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
     for (size_t i = 0; i < numOptions; ++i) {
         printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
     }
-    printf("[%zu] Exit\n", numOptions);
+    printf("[%zu] Back\n", numOptions);
 
     int selection = -1;
     const int count = fscanf(stdin, "%d", &selection);
@@ -121,12 +121,14 @@ void conversation(const size_t id) {
 }
 
 void handle_character(const size_t characterID) {
+    clear_screen();
     const Person* const character = &allPeople[characterID - 1];
     printf("You are talking to %s\nTheir role is: %s\n\nDescription: %s\n\n\n", character->name, character->role, character->description);
     conversation(character->conversation);
 }
 
 void handle_interactions(const Room* const room) {
+    clear_screen();
     printf("Here are the things you can interact with:\n");
     const size_t numInteractables = sizeof(room->interactables) / sizeof(room->interactables[0]);
     size_t numAccessible = 0;
@@ -149,9 +151,8 @@ void handle_interactions(const Room* const room) {
     }
     if (numAccessible == 0) {
         printf("No options available...\n");
-        return;
     }
-    printf("[%zu] Exit\n", numAccessible);
+    printf("[%zu] Back\n", numAccessible);
 
     bool exit = false;
     while (!exit) {
@@ -181,15 +182,31 @@ void handle_interactions(const Room* const room) {
     }
 }
 
+void handle_org_management() {
+    clear_screen();
+    printf("You can do the following:\n\n");
+    // TODO Should probably track broken containment rooms, and use those to present a "repair broken containments" option
+    // TODO Can have a containmentQuality variable which affects breach rate, but has a monthly cost, increasing as quality increases
+    // TODO can assign MTFs to operations to contain SCPs 
+    // TODO Each living MTF member has a budget cost (more for wounded personnel)
+    // TODO Each SCP has a breach chance, and a budgetary value
+    printf("[0] Invest in better containment\n");
+    printf("[1] Send an MTF to contain a new anomaly\n");
+    printf("[2] Back");
+}
+
 /**
  * @brief Handles presenting and executing on options for the given room
- * @detail Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
+ * @details Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
  * @param room In/Out param, room to present, and overwritten with next selected room pointer, or nullptr if player chooses to exit.
  * @param maxConns Maximum number of connections from a room
  * @param maxChars Maximum number of characters a room can have
  */
 Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
+    clear_screen();
     // Using that set_flag() does nothing if flagBit is zero
+    // FIXME This'll run _every_ time we enter the room, not just the first time! Set a "hasBeenEntered" flag on the room (separate from narrative flags 
+    // since another action might clobber the narrative flag later)
     set_flag(room->firstEntrySetsFlag, true);
     set_flag(room->firstEntryUnsetsFlag, false);
     
@@ -230,7 +247,7 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
     }
     printf("[%zu] Interact\n", totalOpts);
     ++totalOpts;
-    printf("[%zu] Exit Game\n", totalOpts);
+    printf("[%zu] Main Menu\n", totalOpts);
 
     int selection = -1;
     const int count = fscanf(stdin, "%d", &selection);
@@ -239,6 +256,7 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
         return nullptr;
     }
     fscanf(stdin, "%*[^\n]");
+    printf("Selected %d, total options %zu", selection, totalOpts);
     if (selection < 0 || selection > totalOpts) {
         printf("Invalid Input!\n");
         return room;

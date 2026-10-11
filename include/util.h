@@ -11,10 +11,12 @@ void log_error(const char* const message);
 
 /**
  * @brief Logs the given message to output stream(s), along with current time.
- * @detail Currently just to std streams (stderr for ERROR, FATAL; else stdout), but in future also to a log file.
+ * @details Currently just to std streams (stderr for ERROR, FATAL; else stdout), but in future also to a log file.
  */
 void log_message(const LogLevel level, const char* const message);
 
 void clear_array(const size_t arrayByteSize, void* arrayBytes);
+
+void clear_screen();
 
 #endif

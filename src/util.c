@@ -27,3 +27,7 @@ void clear_array(const size_t arrayByteSize, void* arrayBytes) {
         memset(arrayBytes, 0, arrayByteSize);
     }
 }
+
+void clear_screen() {
+    printf("\e[H\e[2J\e[3J");   // The sequence used by `clear` in the terminal
+}

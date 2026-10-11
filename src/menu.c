@@ -185,6 +185,7 @@ int load_game(const char* const path) {
 void present_menu() {
     bool exit = false;
     while (!exit) {
+        clear_screen();
         printf("[0] Set Player Name\n[1] New Game\n[2] Load Game\n[3] Exit Game\n[4] Save Game (DEBUG)\n");
         int selection = -1;
         int count = fscanf(stdin, "%d", &selection);
