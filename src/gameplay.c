@@ -196,7 +196,7 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
     uint8_t selection = 0;
 
     while (true) {
-        const int count = fscanf(stdin, "%u", &selection);
+        const int count = fscanf(stdin, "%hhu", &selection);
         if (count <= 0) {
             log_error("Could not read input!\n");
             return 0;
@@ -218,12 +218,18 @@ void deploy_mtf() {
 
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     unsigned options = 0;
+    unsigned assignable[numMTFs] = {};
     for (size_t i = 0; i < numMTFs; ++i) {
-        if (progress.org.mtfs[i] == 0) {
+        const unsigned mtfID = progress.org.mtfs[i];
+        if (mtfID == 0) {
             break;
         }
-        const MTF* const mtf = &allMTFs[progress.org.mtfs[i] - 1];
-        // FIXME Only add to list if not already active
+
+        const MTF* const mtf = &allMTFs[mtfID - 1];
+        if (mtf->deployed || mtf->active || mtf->personnel.operational == 0) {
+            continue;
+        }
+        assignable[options] = mtfID;
         printf(
             "[%zu] %s: %u operational, %u wounded, %u dead\n", 
             i, 
@@ -232,9 +238,10 @@ void deploy_mtf() {
             mtf->personnel.wounded, 
             mtf->personnel.dead
         );
+
         ++options;
     }
-    printf("[%u] Back", options);
+    printf("[%u] Back\n", options);
 
     unsigned selected = 0;
     unsigned selection = 0;
@@ -251,7 +258,7 @@ void deploy_mtf() {
         } else if (selection == options) {
             return;
         } else {
-            selected = progress.org.mtfs[selection];
+            selected = progress.org.mtfs[assignable[selection]];
         }
     }
 
@@ -270,7 +277,7 @@ void handle_org_management() {
         printf("[0] Invest in better containment\n");
         printf("[1] Send an MTF to contain a new anomaly\n");
         printf("[2] Invest in more research\n");
-        printf("[3] Back");
+        printf("[3] Back\n");
 
         int selection = -1;
         const int count = fscanf(stdin, "%d", &selection);
@@ -355,6 +362,8 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
     }
     printf("[%zu] Interact\n", totalOpts);
     ++totalOpts;
+    printf("[%zu] Manage Organisation\n", totalOpts);
+    ++totalOpts;
     printf("[%zu] Main Menu\n", totalOpts);
 
     int selection = -1;
@@ -367,8 +376,11 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
     if (selection < 0 || selection > totalOpts) {
         printf("Invalid Input!\n");
         return room;
-    } else if (selection == totalOpts - 1) {
+    } else if (selection == totalOpts - 2) {
         handle_interactions(room);
+        return room;
+    } else if (selection == totalOpts - 1) {
+        handle_org_management();
         return room;
     } else if (selection == totalOpts) {
         return nullptr;
