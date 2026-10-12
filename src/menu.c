@@ -2,6 +2,7 @@
 #include "gameplay.h"
 #include "util.h"
 #include "tomlc17.h"
+#include "map.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -23,24 +24,44 @@ int save_game(const char* const path) {
     
     fprintf(file, "[organisation]\n");
     fprintf(file, "reputation = %u\n", progress.org.reputation);
+    fprintf(file, "contQuality = %u\n", progress.org.containmentQuality);
     fprintf(file, "budget = %u\n", progress.org.budget.totalAmount);
     fprintf(file, "containAlloc = %u\n", progress.org.budget.containmentAlloc);
     fprintf(file, "researchAlloc = %u\n", progress.org.budget.researchAlloc);
     fprintf(file, "scps = [");
     
-    size_t countSCPs = sizeof(progress.org.scps) / sizeof(unsigned);
+    const size_t countSCPs = sizeof(progress.org.scps) / sizeof(unsigned);
     bool isStart = true;
     for (size_t i = 0; i < countSCPs; ++i) {
         if(progress.org.scps[i]) {
             if (!isStart) {
                 fprintf(file, ",");
+            } else {
+                isStart = false;
             }
             fprintf(file, "%u", progress.org.scps[i]);
         } 
     }
     fprintf(file, "]\n");
+    fprintf(file, "breachedRooms = [");
     
-    size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    const size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
+    isStart = true;
+    for (size_t i = 0; i < countRooms; ++i) {
+        if(siteFacility.rooms[i].containmentBreached) {
+            if (!isStart) {
+                fprintf(file, ",");
+            } else {
+                isStart = false;
+            }
+
+            fprintf(file, "%zu", i + 1);
+        } 
+    }
+    fprintf(file, "]\n");
+
+    
+    const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
         if (progress.org.mtfs[i]) {
             const unsigned id = progress.org.mtfs[i];
@@ -101,16 +122,17 @@ int load_game(const char* const path) {
     progress.currentRoom = roomDatum.u.int64;
     progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
 
-    
+    const size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
+    const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);
+    const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
 
     const toml_datum_t repDatum = toml_get(orgDatum, "reputation");
     const toml_datum_t budDatum = toml_get(orgDatum, "budget");
     const toml_datum_t resDatum = toml_get(orgDatum, "researchAlloc");
     const toml_datum_t conDatum = toml_get(orgDatum, "containAlloc");
     const toml_datum_t scpDatum = toml_get(orgDatum, "scps");
+    const toml_datum_t breachDatum = toml_get(orgDatum, "breachedRooms");
     const toml_datum_t mtfDatum = toml_get(orgDatum, "mtf");
-    const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);
-    const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     if (repDatum.type != TOML_INT64 || repDatum.u.int64 < 0) {
         log_error("Reputation must be an integer >= 0!\n");
         toml_free(tomlResult);
@@ -141,6 +163,16 @@ int load_game(const char* const path) {
         toml_free(tomlResult);
         return EOF;
     }
+    if (breachDatum.type != TOML_ARRAY || (breachDatum.u.arr.size != 0 && breachDatum.u.arr.elem[0].type != TOML_INT64)) {
+        log_error("Breached rooms must be an array of integers (or empty)!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (breachDatum.u.arr.size > countRooms) {
+        log_error("Breached rooms array is too long!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
     if (mtfDatum.type != TOML_UNKNOWN && (mtfDatum.type != TOML_ARRAY || mtfDatum.u.arr.elem[0].type != TOML_TABLE)) {
         log_error("MTFs must be an array of tables!\n");
         toml_free(tomlResult);
@@ -159,6 +191,11 @@ int load_game(const char* const path) {
     if (scpDatum.u.arr.size > 0) {
         for (size_t i = 0; i < scpDatum.u.arr.size; ++i) {
             progress.org.scps[i] = scpDatum.u.arr.elem[i].u.int64;
+        }
+    }
+    if (breachDatum.u.arr.size > 0) {
+        for (size_t i = 0; i < breachDatum.u.arr.size; ++i) {
+            siteFacility.rooms[breachDatum.u.arr.elem[i].u.int64 - 1].containmentBreached = true;
         }
     }
     if (mtfDatum.type != TOML_UNKNOWN && mtfDatum.u.arr.size > 0) {
@@ -219,7 +256,6 @@ int load_game(const char* const path) {
     toml_free(tomlResult);
     return 0;
 }
-
 
 void present_menu() {
     bool exit = false;

@@ -72,6 +72,7 @@ typedef struct {
     uint8_t reputation;
     unsigned scps[32];   // IDs of contained SCPs
     unsigned mtfs[8];
+    uint8_t containmentQuality;
 } Organisation;
 
 /**

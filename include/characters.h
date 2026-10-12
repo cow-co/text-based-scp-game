@@ -13,6 +13,9 @@ typedef struct {
     char name[64];
     char description[8192];
     SCPObjectClass objectClass;
+    double breachProb;
+    double captureProb;
+    unsigned budgetValue;
 } SCP;
 
 extern SCP allSCPs[32]; // Not literally ALL SCPs obviously, but all the ones available in the game
@@ -23,7 +26,7 @@ typedef struct {
     char name[64];
     char description[1024];
     char role[64];
-    size_t conversation;  // TODO Should probably ensure all IDs are size_t
+    size_t conversation;  // TODO Should probably ensure all IDs are unsigned
 } Person;
 
 extern Person allPeople[32];

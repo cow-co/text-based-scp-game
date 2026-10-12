@@ -10,6 +10,7 @@ typedef struct {
     unsigned interactables[8];
     unsigned containedSCP; // XXX Should probably make these ID refs into size_t (won't ever practically be a problem though)
     unsigned connections[8];
+    bool containmentBreached;
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
     unsigned requiresFlagSet;
