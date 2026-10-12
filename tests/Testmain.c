@@ -201,21 +201,21 @@ void test_ChangingRep() {
 
 void test_ChangingBudget() {
     Organisation org = {};
-    org.budget = 50000U;
+    org.budget.totalAmount = 50000U;
     change_budget(&org, -10000);
-    TEST_ASSERT_EQUAL_UINT(40000, org.budget);
+    TEST_ASSERT_EQUAL_UINT(40000, org.budget.totalAmount);
 
-    org.budget = 50000U;
+    org.budget.totalAmount = 50000U;
     change_budget(&org, 10000);
-    TEST_ASSERT_EQUAL_UINT(60000, org.budget);
+    TEST_ASSERT_EQUAL_UINT(60000, org.budget.totalAmount);
 
-    org.budget = 32767U;
+    org.budget.totalAmount = 32767U;
     change_budget(&org, -32768);
-    TEST_ASSERT_EQUAL_UINT(0, org.budget);
+    TEST_ASSERT_EQUAL_UINT(0, org.budget.totalAmount);
 
-    org.budget = UINT_MAX;
+    org.budget.totalAmount = UINT_MAX;
     change_budget(&org, 1);
-    TEST_ASSERT_EQUAL_UINT(UINT_MAX, org.budget);
+    TEST_ASSERT_EQUAL_UINT(UINT_MAX, org.budget.totalAmount);
 }
 
 
