@@ -190,8 +190,9 @@ void handle_interactions(const Room* const room) {
 
 uint8_t allocate_budget(uint8_t slackCapacity) {
     printf("What percentage of your budget do you wish to allocate? Your current allocations are:\n");
-    // TODO display (and track!) budget allocations
-    printf("Total budget: %u", progress.org.budget);
+    printf("Containment: %u percent\n", progress.org.budget.containmentAlloc);
+    printf("Research: %u percent\n", progress.org.budget.researchAlloc);
+    printf("Total budget: %u\n", progress.org.budget.totalAmount);
     uint8_t selection = 0;
 
     while (true) {
@@ -209,6 +210,55 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
         } else {
             return selection;
         }
+    }
+}
+
+unsigned deploy_mtf() {
+    printf("Select an MTF to deploy:\n\n");
+
+    const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    unsigned options = 0;
+    for (size_t i = 0; i < numMTFs; ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        }
+        const MTF* const mtf = &allMTFs[progress.org.mtfs[i] - 1];
+        // FIXME Only add to list if not already active
+        printf(
+            "[%zu] %s: %u operational, %u wounded, %u dead\n", 
+            i, 
+            mtf->name, 
+            mtf->personnel.operational, 
+            mtf->personnel.wounded, 
+            mtf->personnel.dead
+        );
+        ++options;
+    }
+    printf("[%u] Back", options);
+
+    unsigned selected = 0;
+    unsigned selection = 0;
+    while (true) {
+        const int count = fscanf(stdin, "%u", &selection);
+        if (count <= 0) {
+            log_error("Could not read input!\n");
+            return;
+        }
+        fscanf(stdin, "%*[^\n]");
+
+        if (selection > options) {
+            log_error("Invalid Input!\n");
+        } else if (selection == options) {
+            return;
+        } else {
+            selected = progress.org.mtfs[selection];
+        }
+    }
+
+    if (selected) {
+        printf("Deploying MTF...\n");
+        allMTFs[progress.org.mtfs[selected] - 1].deployed = true;
+        allMTFs[progress.org.mtfs[selected] - 1].deploymentWeeksRemaining = 4;
     }
 }
 
@@ -232,15 +282,15 @@ void handle_org_management() {
 
         switch (selection) {
             case 0:
-                uint8_t newContainmentAlloc = allocate_budget(100); // TODO set the slack capacity appropriately based on current budget allocations
-                // TODO Set allocations on the budget
+                uint8_t newContainmentAlloc = allocate_budget(100 - progress.org.budget.researchAlloc);
+                progress.org.budget.containmentAlloc = newContainmentAlloc;
                 break;
             case 1:
-                // TODO Go to the select-MTF menu
+                deploy_mtf();
                 break;
             case 2:
-                uint8_t newContainmentAlloc = allocate_budget(100); // TODO set the slack capacity appropriately based on current budget allocations
-                // TODO Set allocations on the budget
+                uint8_t newResearchAlloc = allocate_budget(100 - progress.org.budget.containmentAlloc);
+                progress.org.budget.researchAlloc = newResearchAlloc;
                 break;
             case 3:
                 exit = true;

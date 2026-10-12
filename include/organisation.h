@@ -40,9 +40,9 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
 
 typedef struct {
   Personnel personnel;
-  bool active;
+  bool active;  // Deployed to contain a breach? - TODO check if we actually want this separately from `deployed`
   char name[64];
-  bool deployed;
+  bool deployed;    // Hunting an SCP
   uint8_t deploymentWeeksRemaining;
 } MTF;
 
@@ -61,9 +61,14 @@ int parse_mtf_data(const char* const filePath);
  */
 void print_mtfs();
 
+typedef struct {
+    unsigned totalAmount;
+    uint8_t containmentAlloc;
+    uint8_t researchAlloc;
+} Budget;
 
 typedef struct {
-    unsigned budget;
+    Budget budget;
     uint8_t reputation;
     unsigned scps[32];   // IDs of contained SCPs
     unsigned mtfs[8];
