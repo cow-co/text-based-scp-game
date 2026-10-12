@@ -3,3 +3,4 @@ entrances = [1, 2]
 [[room]]
 name = "Entryway"
 connections = [2]
+repairCost = 100

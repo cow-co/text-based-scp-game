@@ -4,3 +4,4 @@ entrances = [1, 2]
 name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
 connections = [2]
+repairCost = 100

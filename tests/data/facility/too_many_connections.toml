@@ -4,3 +4,4 @@ entrances = [1, 2]
 name = "Entryway"
 description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
 connections = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+repairCost = 100

@@ -28,6 +28,7 @@ int parse_room(
     const toml_datum_t roomCharactersDatum = toml_get(*parent, "characters");
     const toml_datum_t roomInteractsDatum = toml_get(*parent, "interactables");
     const toml_datum_t roomSCPDatum = toml_get(*parent, "containedSCP");
+    const toml_datum_t roomRepairDatum = toml_get(*parent, "repairCost");
 
     if (roomNameDatum.type != TOML_STRING || roomNameDatum.u.str.len >= maxNameLength || roomNameDatum.u.str.len == 0) {
         log_error("Room name is not a string, or is too long, or has no content!\n");
@@ -77,6 +78,10 @@ int parse_room(
         log_error("Room SCP must be an integer > 0!\n");
         return EOF;
     }
+    if (roomRepairDatum.type != TOML_INT64 || roomRepairDatum.u.int64 <= 0) {
+        log_error("Room repair cost must be an integer > 0!\n");
+        return EOF;
+    }
 
     strncpy(room->name, roomNameDatum.u.str.ptr, roomNameDatum.u.str.len);
     strncpy(room->description, roomDescriptionDatum.u.str.ptr, roomDescriptionDatum.u.str.len);
@@ -120,6 +125,7 @@ int parse_room(
             room->interactables[j] = roomInteractsDatum.u.arr.elem[j].u.int64;
         }
     }
+    room->repairCost = roomRepairDatum.u.int64;
 
     return 0;
 }

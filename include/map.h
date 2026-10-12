@@ -11,6 +11,7 @@ typedef struct {
     unsigned containedSCP; // XXX Should probably make these ID refs into size_t (won't ever practically be a problem though)
     unsigned connections[8];
     bool containmentBreached;
+    unsigned repairCost;
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
     unsigned requiresFlagSet;

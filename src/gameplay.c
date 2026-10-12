@@ -12,6 +12,7 @@ Progress progress = {};
 size_t maxConns = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
 size_t maxChars = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
 size_t maxInts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
+size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -250,7 +251,39 @@ void deploy_mtf() {
 }
 
 void repair_containment() {
-    // TODO Fill this out
+    clear_screen();
+    while (true) {
+        printf("Which room should we repair?\n");
+        size_t total = 0;
+        unsigned brokenRooms[maxRooms] = {};
+        for (size_t i = 0; i < maxRooms; ++i) {
+            if (siteFacility.rooms[i].name[0] == '\0') {
+                break;
+            } else if (
+                siteFacility.rooms[i].containmentBreached 
+                && progress.org.budget.totalAmount >= siteFacility.rooms[i].repairCost
+            ) {
+                printf(
+                    "[%zu] %s (Costs %u)\n", 
+                    total, 
+                    siteFacility.rooms[i].name, 
+                    siteFacility.rooms[i].repairCost
+                );
+                brokenRooms[total] = i;
+                ++total;
+            }
+        }
+        printf("[%zu] Back", total);
+
+        int selection = read_numeric_input(total, 0);
+
+        if (selection == total) {
+            return;
+        } else if (selection != -1) {
+            siteFacility.rooms[brokenRooms[selection]].containmentBreached = false;
+            change_budget(&progress.org, siteFacility.rooms[brokenRooms[selection]].repairCost);
+        }
+    }
 }
 
 void handle_org_management() {
@@ -394,8 +427,7 @@ Room* present_high_level_options(Room* room) {
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
-    size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
-    if (fromRoomID <= countRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
+    if (fromRoomID <= maxRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
         room = &siteFacility.rooms[fromRoomID-1];
     } else {
         log_error("Room not found!\n");
