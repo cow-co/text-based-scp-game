@@ -81,6 +81,12 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
             ++numOptions;
         }
     }
+
+    // Return to the top of the conversation tree if there are no more options available in this chain
+    if (numOptions == 0) {
+        return &(convo->nodes[0]);
+    }
+
     for (size_t i = 0; i < numOptions; ++i) {
         printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
     }
@@ -182,25 +188,77 @@ void handle_interactions(const Room* const room) {
     }
 }
 
+uint8_t allocate_budget(uint8_t slackCapacity) {
+    printf("What percentage of your budget do you wish to allocate? Your current allocations are:\n");
+    // TODO display (and track!) budget allocations
+    printf("Total budget: %u", progress.org.budget);
+    uint8_t selection = 0;
+
+    while (true) {
+        const int count = fscanf(stdin, "%u", &selection);
+        if (count <= 0) {
+            log_error("Could not read input!\n");
+            return 0;
+        }
+        fscanf(stdin, "%*[^\n]");
+
+        if (selection > 100) {
+            log_error("Invalid Input, percentage must be <= 100!\n");
+        } else if (selection > slackCapacity) {
+            log_error("Invalid Input, you don't have enough of your budget to spare!\n");
+        } else {
+            return selection;
+        }
+    }
+}
+
 void handle_org_management() {
     clear_screen();
-    printf("You can do the following:\n\n");
-    // TODO Should probably track broken containment rooms, and use those to present a "repair broken containments" option
-    // TODO Can have a containmentQuality variable which affects breach rate, but has a monthly cost, increasing as quality increases
-    // TODO can assign MTFs to operations to contain SCPs 
-    // TODO Each living MTF member has a budget cost (more for wounded personnel)
-    // TODO Each SCP has a breach chance, and a budgetary value
-    printf("[0] Invest in better containment\n");
-    printf("[1] Send an MTF to contain a new anomaly\n");
-    printf("[2] Back");
+    bool exit = false;
+    while (!exit) {
+        printf("You can do the following:\n\n");
+        printf("[0] Invest in better containment\n");
+        printf("[1] Send an MTF to contain a new anomaly\n");
+        printf("[2] Invest in more research\n");
+        printf("[3] Back");
+
+        int selection = -1;
+        const int count = fscanf(stdin, "%d", &selection);
+        if (count <= 0) {
+            log_error("Could not read input!\n");
+            return nullptr;
+        }
+        fscanf(stdin, "%*[^\n]");
+
+        switch (selection) {
+            case 0:
+                uint8_t newContainmentAlloc = allocate_budget(100); // TODO set the slack capacity appropriately based on current budget allocations
+                // TODO Set allocations on the budget
+                break;
+            case 1:
+                // TODO Go to the select-MTF menu
+                break;
+            case 2:
+                uint8_t newContainmentAlloc = allocate_budget(100); // TODO set the slack capacity appropriately based on current budget allocations
+                // TODO Set allocations on the budget
+                break;
+            case 3:
+                exit = true;
+                break;
+            default:
+                log_error("Invalid input!\n");
+                break;
+        }
+    }
 }
 
 /**
  * @brief Handles presenting and executing on options for the given room
  * @details Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
- * @param room In/Out param, room to present, and overwritten with next selected room pointer, or nullptr if player chooses to exit.
+ * @param room room to present
  * @param maxConns Maximum number of connections from a room
  * @param maxChars Maximum number of characters a room can have
+ * @return Room* next room to go to, or `nullptr` if we want to quit
  */
 Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
     clear_screen();
@@ -256,7 +314,6 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
         return nullptr;
     }
     fscanf(stdin, "%*[^\n]");
-    printf("Selected %d, total options %zu", selection, totalOpts);
     if (selection < 0 || selection > totalOpts) {
         printf("Invalid Input!\n");
         return room;

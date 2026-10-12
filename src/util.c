@@ -3,10 +3,12 @@
 #include <time.h>
 #include <string.h>
 
+// TODO Make this a format message
 void log_error(const char* const message) {
     log_message(LOG_LVL_ERROR, message);
 }
 
+// TODO Make this a format message
 void log_message(const LogLevel level, const char* const message) {
     // Later, can do more here like also logging to a file
     time_t current = time(NULL);

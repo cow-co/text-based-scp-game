@@ -42,6 +42,8 @@ typedef struct {
   Personnel personnel;
   bool active;
   char name[64];
+  bool deployed;
+  uint8_t deploymentWeeksRemaining;
 } MTF;
 
 
