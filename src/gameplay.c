@@ -213,7 +213,7 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
     }
 }
 
-unsigned deploy_mtf() {
+void deploy_mtf() {
     printf("Select an MTF to deploy:\n\n");
 
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
@@ -276,7 +276,7 @@ void handle_org_management() {
         const int count = fscanf(stdin, "%d", &selection);
         if (count <= 0) {
             log_error("Could not read input!\n");
-            return nullptr;
+            return;
         }
         fscanf(stdin, "%*[^\n]");
 

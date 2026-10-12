@@ -128,7 +128,7 @@ void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
             Reputation: %u \n", 
-            org->budget, 
+            org->budget.totalAmount, 
             org->reputation
     );
 }
@@ -189,7 +189,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
     
     outOrg->reputation = repDatum.u.int64;
-    outOrg->budget = budDatum.u.int64;
+    outOrg->budget.totalAmount = budDatum.u.int64;
 
     for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {
         const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
@@ -226,12 +226,12 @@ void change_reputation(Organisation* const org, const int16_t delta) {
 }
 
 void change_budget(Organisation* const org, const int16_t delta) {
-    if (delta < 0 && -delta > org->budget) {
-        org->budget = 0;
-    } else if (delta > 0 && (UINT_MAX - org->budget) < delta) {
+    if (delta < 0 && -delta > org->budget.totalAmount) {
+        org->budget.totalAmount = 0;
+    } else if (delta > 0 && (UINT_MAX - org->budget.totalAmount) < delta) {
         // Protect against wraparound
-        org->budget = UINT_MAX;
+        org->budget.totalAmount = UINT_MAX;
     } else {
-        org->budget = org->budget + delta;
+        org->budget.totalAmount = org->budget.totalAmount + delta;
     }
 }

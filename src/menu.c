@@ -23,7 +23,9 @@ int save_game(const char* const path) {
     
     fprintf(file, "[organisation]\n");
     fprintf(file, "reputation = %u\n", progress.org.reputation);
-    fprintf(file, "budget = %u\n", progress.org.budget);
+    fprintf(file, "budget = %u\n", progress.org.budget.totalAmount);
+    fprintf(file, "containAlloc = %u\n", progress.org.budget.containmentAlloc);
+    fprintf(file, "researchAlloc = %u\n", progress.org.budget.researchAlloc);
     fprintf(file, "scps = [");
     
     size_t countSCPs = sizeof(progress.org.scps) / sizeof(unsigned);
@@ -100,6 +102,8 @@ int load_game(const char* const path) {
 
     const toml_datum_t repDatum = toml_get(orgDatum, "reputation");
     const toml_datum_t budDatum = toml_get(orgDatum, "budget");
+    const toml_datum_t resDatum = toml_get(orgDatum, "researchAlloc");
+    const toml_datum_t conDatum = toml_get(orgDatum, "containAlloc");
     const toml_datum_t scpDatum = toml_get(orgDatum, "scps");
     const toml_datum_t mtfDatum = toml_get(orgDatum, "mtf");
     const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);
@@ -109,9 +113,18 @@ int load_game(const char* const path) {
         toml_free(tomlResult);
         return EOF;
     }
-
     if (budDatum.type != TOML_INT64 || budDatum.u.int64 < 0) {
         log_error("Budget must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (resDatum.type != TOML_INT64 || resDatum.u.int64 < 0 || resDatum.u.int64 > 100) {
+        log_error("Research allocation must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (conDatum.type != TOML_INT64 || conDatum.u.int64 < 0 || conDatum.u.int64 > 100) {
+        log_error("Containment allocation must be an integer >= 0 and <= 100!\n");
         toml_free(tomlResult);
         return EOF;
     }
@@ -137,7 +150,9 @@ int load_game(const char* const path) {
     }
     
     progress.org.reputation = repDatum.u.int64;
-    progress.org.budget = budDatum.u.int64;
+    progress.org.budget.totalAmount = budDatum.u.int64;
+    progress.org.budget.containmentAlloc = conDatum.u.int64;
+    progress.org.budget.researchAlloc = resDatum.u.int64;
     if (scpDatum.u.arr.size > 0) {
         for (size_t i = 0; i < scpDatum.u.arr.size; ++i) {
             progress.org.scps[i] = scpDatum.u.arr.elem[i].u.int64;

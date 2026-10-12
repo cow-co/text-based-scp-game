@@ -4,4 +4,6 @@ current_room = 11
 [organisation]
 reputation = 18
 budget = 15
+researchAlloc = 0
+containAlloc = 0
 scps = []
