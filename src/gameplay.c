@@ -12,7 +12,6 @@ Progress progress = {};
 size_t maxConns = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
 size_t maxChars = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
 size_t maxInts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
-size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -252,6 +251,7 @@ void deploy_mtf() {
 
 void repair_containment() {
     clear_screen();
+    size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     while (true) {
         printf("Which room should we repair?\n");
         size_t total = 0;
@@ -427,6 +427,7 @@ Room* present_high_level_options(Room* room) {
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
+    size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     if (fromRoomID <= maxRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
         room = &siteFacility.rooms[fromRoomID-1];
     } else {
