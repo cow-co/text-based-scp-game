@@ -19,4 +19,9 @@ void clear_array(const size_t arrayByteSize, void* arrayBytes);
 
 void clear_screen();
 
+/**
+ * @brief Reads a number from stdin, and validates against the maximum and minimum
+ * @returns long -1 if failed to read or failed validation
+ */
+int read_numeric_input(unsigned max, unsigned min);
 #endif

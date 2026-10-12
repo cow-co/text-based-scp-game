@@ -9,6 +9,9 @@
 
 char playerName[64] = {};
 Progress progress = {};
+size_t maxConns = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
+size_t maxChars = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
+size_t maxInts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -92,17 +95,10 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
     }
     printf("[%zu] Back\n", numOptions);
 
-    int selection = -1;
-    const int count = fscanf(stdin, "%d", &selection);
-    if (count <= 0) {
-        printf("Could not read input!\n");
-    }
-    fscanf(stdin, "%*[^\n]");
-    if (selection < 0 || selection > numOptions) {
-        printf("Invalid Input!\n");
-    } else if (selection == numOptions) {
+    int selection = read_numeric_input(numOptions, 0);
+    if (selection == numOptions) {
         node = nullptr;
-    } else {
+    } else if (selection != -1) {
         const unsigned link = node->options[accessibleNodes[selection]].linksTo;
         node = &(convo->nodes[link - 1]);
     }
@@ -196,18 +192,9 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
     uint8_t selection = 0;
 
     while (true) {
-        const int count = fscanf(stdin, "%hhu", &selection);
-        if (count <= 0) {
-            log_error("Could not read input!\n");
-            return 0;
-        }
-        fscanf(stdin, "%*[^\n]");
+        selection = read_numeric_input(slackCapacity, 0);
 
-        if (selection > 100) {
-            log_error("Invalid Input, percentage must be <= 100!\n");
-        } else if (selection > slackCapacity) {
-            log_error("Invalid Input, you don't have enough of your budget to spare!\n");
-        } else {
+        if (selection != -1) {
             return selection;
         }
     }
@@ -246,18 +233,11 @@ void deploy_mtf() {
     unsigned selected = 0;
     unsigned selection = 0;
     while (true) {
-        const int count = fscanf(stdin, "%u", &selection);
-        if (count <= 0) {
-            log_error("Could not read input!\n");
-            return;
-        }
-        fscanf(stdin, "%*[^\n]");
+        selection = read_numeric_input(options, 0);
 
-        if (selection > options) {
-            log_error("Invalid Input!\n");
-        } else if (selection == options) {
+        if (selection == options) {
             return;
-        } else {
+        } else if (selection > -1) {
             selected = progress.org.mtfs[assignable[selection]];
         }
     }
@@ -279,15 +259,11 @@ void handle_org_management() {
         printf("[2] Invest in more research\n");
         printf("[3] Back\n");
 
-        int selection = -1;
-        const int count = fscanf(stdin, "%d", &selection);
-        if (count <= 0) {
-            log_error("Could not read input!\n");
-            return;
-        }
-        fscanf(stdin, "%*[^\n]");
+        int selection = read_numeric_input(3, 0);
 
         switch (selection) {
+            case -1:
+                break;  // Error message shown by the input handler
             case 0:
                 uint8_t newContainmentAlloc = allocate_budget(100 - progress.org.budget.researchAlloc);
                 progress.org.budget.containmentAlloc = newContainmentAlloc;
@@ -313,11 +289,9 @@ void handle_org_management() {
  * @brief Handles presenting and executing on options for the given room
  * @details Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
  * @param room room to present
- * @param maxConns Maximum number of connections from a room
- * @param maxChars Maximum number of characters a room can have
  * @return Room* next room to go to, or `nullptr` if we want to quit
  */
-Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
+Room* handle_room(Room* const room) {
     clear_screen();
     // Using that set_flag() does nothing if flagBit is zero
     // FIXME This'll run _every_ time we enter the room, not just the first time! Set a "hasBeenEntered" flag on the room (separate from narrative flags 
@@ -325,9 +299,7 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
     set_flag(room->firstEntrySetsFlag, true);
     set_flag(room->firstEntryUnsetsFlag, false);
     
-    printf("You are in %s\n\t%s\n", room->name, room->description);
-    
-    size_t numConns = 0;
+    size_t totalOpts = 0;
     size_t accessibleConns[maxConns] = {};
     for (size_t i = 0; i < maxConns; ++i) {
         const unsigned connectsTo = room->connections[i];
@@ -335,67 +307,82 @@ Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars
             break;
         }
         if (can_enter_room(connectsTo - 1)) {
-            accessibleConns[numConns] = connectsTo;
-            ++numConns;
+            accessibleConns[totalOpts] = connectsTo;
+            printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
+            ++totalOpts;
         }
-    }
-    for (size_t i = 0; i < maxConns; ++i) {
-        if (accessibleConns[i] == 0) {
-            break;
-        }
-        printf("[%zu] Go to %s\n", i, siteFacility.rooms[accessibleConns[i]-1].name);
     }
     
-    size_t numChars = 0;
-    for (size_t i = 0; i < maxChars; ++i) {
-        if (room->characters[i] == 0) {
-            break;
-        }
-        printf("[%zu] Talk to %s\n", numConns+numChars, allPeople[room->characters[i]-1].name);
-        ++numChars;
-    }
-    
-    size_t totalOpts = numConns + numChars; // XXX Technically _could_ wrap around, but in practice won't.
     if (totalOpts == 0) {
         printf("No options available...\n");
         return nullptr;
     }
-    printf("[%zu] Interact\n", totalOpts);
-    ++totalOpts;
-    printf("[%zu] Manage Organisation\n", totalOpts);
-    ++totalOpts;
-    printf("[%zu] Main Menu\n", totalOpts);
+    printf("[%zu] Back\n", totalOpts);
 
-    int selection = -1;
-    const int count = fscanf(stdin, "%d", &selection);
-    if (count <= 0) {
-        log_error("Could not read input!\n");
-        return nullptr;
+    int selection = read_numeric_input(totalOpts, 0);
+
+    if (selection == totalOpts) {
+        return room;
+    } else if (selection != -1) {
+        return &siteFacility.rooms[accessibleConns[selection]-1];
     }
-    fscanf(stdin, "%*[^\n]");
-    if (selection < 0 || selection > totalOpts) {
-        printf("Invalid Input!\n");
-        return room;
-    } else if (selection == totalOpts - 2) {
-        handle_interactions(room);
-        return room;
-    } else if (selection == totalOpts - 1) {
-        handle_org_management();
-        return room;
-    } else if (selection == totalOpts) {
-        return nullptr;
-    } else if (selection < numConns){
-        const unsigned selectedRoomID = accessibleConns[selection];
-        progress.currentRoom = selectedRoomID;
-        return &(siteFacility.rooms[selectedRoomID-1]);
-    } else {
-        const int selectedPersonID = selection - numConns; // [1], [2] are rooms, [3] a convo; selection=3; numConns=2; 
-        const unsigned charID = room->characters[selectedPersonID];
-        handle_character(charID);
-        return room;
+
+    return room;
+}
+
+void present_characters(const Room* const room) {
+    while (true) {
+        printf("Who do you want to speak to?\n");
+        unsigned numOptions = 0;
+        for (size_t i = 0; i < maxChars; ++i) {
+            if (room->characters[i] == 0) {
+                break;
+            }
+            printf("[%zu] %s\n", i, allPeople[room->characters[i]-1].name);
+            ++numOptions;
+        }
+        printf("[%u] Back\n", numOptions);
+        int selection = read_numeric_input(numOptions, 0);
+        if (selection == numOptions) {
+            return;
+        } else if (selection != -1) {
+            handle_character(room->characters[selection]);
+        }
     }
 }
 
+Room* present_high_level_options(Room* room) {
+    printf("You are in %s\n\t%s\n", room->name, room->description);
+    printf("[0] Go to another room\n");
+    printf("[1] Talk to people\n");
+    printf("[2] Interact with items\n");
+    printf("[3] Manage organisation\n");
+    printf("[4] Exit\n");
+
+    int selection = read_numeric_input(4, 0);
+
+    switch (selection) {
+        case -1:
+            break;  // Error message will already have been shown by the input handler
+        case 0:
+            return handle_room(room);
+        case 1:
+            present_characters(room);
+            return room;
+        case 2:
+            handle_interactions(room);
+            return room;
+        case 3:
+            handle_org_management();
+            return room;
+        case 4:
+            return nullptr;
+        default:
+            log_error("Could not read input!\n");
+            return room;
+    }
+    return room;
+}
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
@@ -408,11 +395,8 @@ void traverse_rooms(const size_t fromRoomID) {
     }
 
     bool exit = false;
-    size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
-    size_t maxChars = sizeof(room->characters) / sizeof(room->characters[0]);
-    size_t maxInts = sizeof(room->interactables) / sizeof(room->interactables[0]);
     while (!exit) {
-        room = handle_room(room, maxConns, maxChars, maxInts);
+        room = present_high_level_options(room);
         if (room == nullptr) {
             break;
         }
