@@ -7,3 +7,11 @@ budget = 15
 researchAlloc = 0
 containAlloc = 0
 scps = []
+[[mtf]]
+id = 1
+active = false
+deployed = true
+deploymentWeeksRemaining = 2
+operational = 10
+wounded = 1
+dead = 2

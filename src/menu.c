@@ -46,6 +46,9 @@ int save_game(const char* const path) {
             const unsigned id = progress.org.mtfs[i];
             fprintf(file, "[[mtf]]\n");
             fprintf(file, "id = %u\n", id);
+            fprintf(file, "active = %s\n", allMTFs[i].active ? "true" : "false");
+            fprintf(file, "deployed = %s\n", allMTFs[i].deployed ? "true" : "false");
+            fprintf(file, "deploymentWeeksRemaining = %u\n", allMTFs[i].deploymentWeeksRemaining);
             fprintf(file, "operational = %d\n", allMTFs[id].personnel.operational);
             fprintf(file, "wounded = %d\n", allMTFs[id].personnel.wounded);
             fprintf(file, "dead = %d\n", allMTFs[id].personnel.dead);
@@ -161,11 +164,29 @@ int load_game(const char* const path) {
     if (mtfDatum.type != TOML_UNKNOWN && mtfDatum.u.arr.size > 0) {
         for (size_t i = 0; i < mtfDatum.u.arr.size; ++i) {
             const toml_datum_t mtfIDDatum = toml_get(mtfDatum.u.arr.elem[i], "id");
+            const toml_datum_t mtfActiveDatum = toml_get(mtfDatum.u.arr.elem[i], "active");
+            const toml_datum_t mtfDeployedDatum = toml_get(mtfDatum.u.arr.elem[i], "deployed");
+            const toml_datum_t mtfWeeksRemDatum = toml_get(mtfDatum.u.arr.elem[i], "deploymentWeeksRemaining");
             const toml_datum_t mtfOperationalDatum = toml_get(mtfDatum.u.arr.elem[i], "operational");
             const toml_datum_t mtfWoundedDatum = toml_get(mtfDatum.u.arr.elem[i], "wounded");
             const toml_datum_t mtfDeadDatum = toml_get(mtfDatum.u.arr.elem[i], "dead");
             if (mtfIDDatum.type != TOML_INT64 || mtfIDDatum.u.int64 <= 0) {
                 log_error("MTF ID Must be an integer > 0!\n");
+                toml_free(tomlResult);
+                return EOF;
+            }
+            if (mtfActiveDatum.type != TOML_BOOLEAN) {
+                log_error("MTF active must be a boolean!\n");
+                toml_free(tomlResult);
+                return EOF;
+            }
+            if (mtfDeployedDatum.type != TOML_BOOLEAN) {
+                log_error("MTF deployed must be a boolean!\n");
+                toml_free(tomlResult);
+                return EOF;
+            }
+            if (mtfWeeksRemDatum.type != TOML_INT64 || mtfWeeksRemDatum.u.int64 < 0) {
+                log_error("MTF weeks remaining Must be an integer >= 0!\n");
                 toml_free(tomlResult);
                 return EOF;
             }
@@ -186,6 +207,9 @@ int load_game(const char* const path) {
             }
 
             progress.org.mtfs[i] = mtfIDDatum.u.int64;
+            allMTFs[mtfIDDatum.u.int64].active = mtfActiveDatum.u.boolean;
+            allMTFs[mtfIDDatum.u.int64].deployed = mtfDeployedDatum.u.boolean;
+            allMTFs[mtfIDDatum.u.int64].deploymentWeeksRemaining = mtfWeeksRemDatum.u.int64;
             allMTFs[mtfIDDatum.u.int64].personnel.operational = mtfOperationalDatum.u.int64;
             allMTFs[mtfIDDatum.u.int64].personnel.wounded = mtfWoundedDatum.u.int64;
             allMTFs[mtfIDDatum.u.int64].personnel.dead = mtfDeadDatum.u.int64;
