@@ -20,7 +20,6 @@ typedef struct {
 
 extern SCP allSCPs[32]; // Not literally ALL SCPs obviously, but all the ones available in the game
 int parse_scps(const char* const filePath);
-void print_scps();
 
 typedef struct {
     char name[64];

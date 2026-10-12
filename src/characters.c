@@ -42,6 +42,9 @@ int parse_scps(const char* const filePath) {
         const toml_datum_t scpNameDatum = toml_get(scpDatum, "name");
         const toml_datum_t scpDescriptionDatum = toml_get(scpDatum, "description");
         const toml_datum_t scpObjClassDatum = toml_get(scpDatum, "objectClass");
+        const toml_datum_t scpBreachChanceDatum = toml_get(scpDatum, "breachChance");
+        const toml_datum_t scpContChanceDatum = toml_get(scpDatum, "containmentChance");
+        const toml_datum_t scpBudgetDatum = toml_get(scpDatum, "budgetValue");
         
         if (scpNameDatum.type != TOML_STRING) {
             log_error("SCP names must be strings!\n");
@@ -58,7 +61,21 @@ int parse_scps(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
-
+        if (scpBreachChanceDatum.type != TOML_FP64 || scpBreachChanceDatum.u.fp64 < 0. || scpBreachChanceDatum.u.fp64 > 1.) {
+            log_error("SCP breach chance should be a number between 0 and 1!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
+        if (scpContChanceDatum.type != TOML_FP64 || scpContChanceDatum.u.fp64 < 0. || scpContChanceDatum.u.fp64 > 1.) {
+            log_error("SCP containment chance should be a number between 0 and 1!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
+        if (scpBudgetDatum.type != TOML_INT64 || scpBudgetDatum.u.int64 < 0) {
+            log_error("SCP budget should be an integer > 0!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
         if (scpNameDatum.u.str.len >= sizeof(allSCPs[i].name)) {
             log_error("SCP Name is too long!\n");
             toml_free(tomlResult);
@@ -73,30 +90,12 @@ int parse_scps(const char* const filePath) {
         strncpy(allSCPs[i].name, scpNameDatum.u.str.ptr, scpNameDatum.u.str.len);
         strncpy(allSCPs[i].description, scpDescriptionDatum.u.str.ptr, scpDescriptionDatum.u.str.len);
         allSCPs[i].objectClass = scpObjClassDatum.u.int64;
+        allSCPs[i].breachProb = scpBreachChanceDatum.u.fp64;
+        allSCPs[i].captureProb = scpContChanceDatum.u.fp64;
+        allSCPs[i].budgetValue = scpBudgetDatum.u.int64;
     }
     toml_free(tomlResult);
     return 0;
-}
-
-void print_scps() {
-    size_t countSCPs = sizeof(allSCPs) / sizeof(allSCPs[0]);
-    for (size_t i = 0; i < countSCPs; ++i) {
-        char* class = "SAFE";
-        if (allSCPs[i].name[0] == '\0') {
-            return;
-        }
-        if (allSCPs[i].objectClass == EUCLID) {
-            class = "EUCLID";
-        } else if (allSCPs[i].objectClass == KETER) {
-            class = "KETER";
-        }
-        printf(
-            "%s\n\tObject Class: %s\n\tDescription: %s\n", 
-            allSCPs[i].name,
-            class,
-            allSCPs[i].description
-        );
-    }
 }
 
 

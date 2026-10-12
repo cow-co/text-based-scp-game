@@ -249,6 +249,10 @@ void deploy_mtf() {
     }
 }
 
+void repair_containment() {
+    // TODO Fill this out
+}
+
 void handle_org_management() {
     clear_screen();
     bool exit = false;
@@ -257,7 +261,8 @@ void handle_org_management() {
         printf("[0] Invest in better containment\n");
         printf("[1] Send an MTF to contain a new anomaly\n");
         printf("[2] Invest in more research\n");
-        printf("[3] Back\n");
+        printf("[3] Repair broken containment rooms\n");
+        printf("[4] Back\n");
 
         int selection = read_numeric_input(3, 0);
 
@@ -276,6 +281,9 @@ void handle_org_management() {
                 progress.org.budget.researchAlloc = newResearchAlloc;
                 break;
             case 3:
+                repair_containment();
+                break;
+            case 4:
                 exit = true;
                 break;
             default:

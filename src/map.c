@@ -12,6 +12,7 @@ const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
 const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
 const size_t maxConnections = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
 const size_t maxCharacters = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
+const size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
 
 int parse_room(
     const toml_datum_t* const parent, 
@@ -153,7 +154,6 @@ int parse_facility(const char* const filePath) {
         toml_free(tomlResult);
         return EOF;
     }
-    size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     if (roomsDatum.u.arr.size > maxRooms) {
         log_error("Rooms list is too long!\n");
         toml_free(tomlResult);
@@ -177,8 +177,7 @@ int parse_facility(const char* const filePath) {
 }
 
 void print_facility() {
-    const size_t numRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
-    for (size_t i = 0; i < numRooms; ++i) {
+    for (size_t i = 0; i < maxRooms; ++i) {
         if (siteFacility.rooms[i].name[0] == '\0') {
             break;
         }
@@ -274,4 +273,15 @@ int parse_interactables(const char* const filePath) {
 
     toml_free(tomlResult);
     return 0;
+}
+
+bool are_any_rooms_breached() {
+    for (size_t i = 0; i < maxRooms; ++i) {
+        if (siteFacility.rooms[i].name[0] == '\0') {
+            break;
+        } else if (siteFacility.rooms[i].containmentBreached) {
+            return true;
+        }
+    }
+    return false;
 }

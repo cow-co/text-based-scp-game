@@ -2,3 +2,6 @@
 name = "SCP-049"
 description = "The Plague Doctor"
 objectClass = 10
+breachChance = 0.5
+containmentChance = 0.5
+budgetValue = 100

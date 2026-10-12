@@ -26,6 +26,7 @@ extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
+bool are_any_rooms_breached();
 
 typedef struct {
     char name[64];
