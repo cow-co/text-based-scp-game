@@ -1,13 +1,13 @@
 #include "conversation.h"
 #include "util.h"
 #include "tomlc17.h"
+#include "counts.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 
 Conversation allConvos[512] = {};
-const size_t maxConvos = sizeof(allConvos) / sizeof(allConvos[0]);
 const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
 
 
@@ -106,8 +106,8 @@ int parse_convos(const char* const filePath) {
         return EOF;
     }
 
-    const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0]);
-    for (size_t i = 0; i < convosDatum.u.arr.size; ++i) {
+    countConvos = convosDatum.u.arr.size;
+    for (size_t i = 0; i < countConvos; ++i) {
         const toml_datum_t convoNodesDatum = toml_get(convosDatum.u.arr.elem[i], "node");
         if (convoNodesDatum.type != TOML_ARRAY || convoNodesDatum.u.arr.elem[0].type != TOML_TABLE) {
             log_error("Conversation nodes must be an array of tables!\n");
@@ -134,7 +134,7 @@ int parse_convos(const char* const filePath) {
 
 
 void print_all_convos() {
-    for (size_t i = 0; i < maxConvos; ++i) {
+    for (size_t i = 0; i < countConvos; ++i) {
         if (allConvos[i].nodes[0].text[0] == '\0') {
             continue;
         }

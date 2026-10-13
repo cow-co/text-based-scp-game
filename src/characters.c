@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "counts.h"
 
 
 SCP allSCPs[32] = {};
@@ -32,7 +33,8 @@ int parse_scps(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < scpsDatum.u.arr.size; ++i) {
+    countSCPs = scpsDatum.u.arr.size;
+    for (size_t i = 0; i < countSCPs; ++i) {
         const toml_datum_t scpDatum = scpsDatum.u.arr.elem[i];
         if (scpDatum.type != TOML_TABLE) {
             log_error("SCP array elements should be tables!\n");
@@ -120,7 +122,8 @@ int parse_people(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < personsDatum.u.arr.size; ++i) {
+    countChars = personsDatum.u.arr.size;
+    for (size_t i = 0; i < countChars; ++i) {
         const toml_datum_t personNameDatum = toml_get(personsDatum.u.arr.elem[i], "name");
         const toml_datum_t personRoleDatum = toml_get(personsDatum.u.arr.elem[i], "role");
         const toml_datum_t personDescDatum = toml_get(personsDatum.u.arr.elem[i], "description");

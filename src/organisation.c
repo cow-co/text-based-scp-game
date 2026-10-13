@@ -1,6 +1,7 @@
 #include "organisation.h"
 #include "tomlc17.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 #include <tgmath.h>
 #include <string.h>
@@ -61,7 +62,8 @@ int parse_mtf_data(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {
+    countMTFs = mtfsDatum.u.arr.size;
+    for (size_t i = 0; i < countMTFs; ++i) {
         const toml_datum_t mtfDatum = mtfsDatum.u.arr.elem[i];
         if (mtfDatum.type != TOML_TABLE) {
             log_error("Each item in the mtf array in the MTFs config file must be a table!\n");
@@ -106,22 +108,6 @@ int parse_mtf_data(const char* const filePath) {
 
     toml_free(tomlResult);
     return 0;
-}
-
-void print_mtfs() {
-    size_t countMTFs = sizeof(allMTFs) / sizeof(allMTFs[0]);
-    for (size_t i = 0; i < countMTFs; ++i) {
-        if (allMTFs[i].name[0] == '\0') {
-            return;
-        }
-        printf(
-            "%s\n\tOperational: %u\n\tWounded: %u\n\tDead: %u\n", 
-            allMTFs[i].name, 
-            allMTFs[i].personnel.operational, 
-            allMTFs[i].personnel.wounded, 
-            allMTFs[i].personnel.dead
-        );
-    }
 }
 
 void print_organisation_details(const Organisation* const org) {
@@ -233,5 +219,16 @@ void change_budget(Organisation* const org, const int16_t delta) {
         org->budget.totalAmount = UINT_MAX;
     } else {
         org->budget.totalAmount = org->budget.totalAmount + delta;
+    }
+}
+
+void change_containment_quality(Organisation* const org, const int16_t delta) {
+    if (delta < 0 && -delta > org->containmentQuality) {
+        org->containmentQuality = 0;
+    } else if (delta > 0 && org->containmentQuality + delta > 100) {
+        // Protect against wraparound
+        org->containmentQuality = 100;
+    } else {
+        org->containmentQuality = org->containmentQuality + delta;
     }
 }

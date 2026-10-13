@@ -4,10 +4,17 @@
 #include "map.h"
 #include "characters.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 #include <string.h>
 
 void setUp() {
+    countChars = 100;
+    countConvos = 100;
+    countInteractables = 100;
+    countMTFs = 100;
+    countRooms = 100;
+    countSCPs = 100;
 }
 void tearDown() {
 }

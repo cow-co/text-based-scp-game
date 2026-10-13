@@ -4,14 +4,15 @@
 #include "characters.h"
 #include "conversation.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 
 
 char playerName[64] = {};
 Progress progress = {};
-size_t maxConns = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
-size_t maxChars = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
-size_t maxInts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
+size_t maxConnsPerRoom = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
+size_t maxCharsPerRoom = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
+size_t maxIntsPerRoom = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -107,8 +108,7 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
 
 void conversation(const size_t id) {
     Conversation* convo = nullptr;
-    size_t countConvos = sizeof(allConvos) / sizeof(allConvos[0]);
-    if (id <= countConvos && allConvos[id-1].nodes[0].text[0] != '\0') {
+    if (id <= countConvos) {
         convo = &allConvos[id-1];
     } else {
         log_error("Conversation not found!\n");
@@ -251,12 +251,11 @@ void deploy_mtf() {
 
 void repair_containment() {
     clear_screen();
-    size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     while (true) {
         printf("Which room should we repair?\n");
         size_t total = 0;
-        unsigned brokenRooms[maxRooms] = {};
-        for (size_t i = 0; i < maxRooms; ++i) {
+        unsigned brokenRooms[countRooms] = {};
+        for (size_t i = 0; i < countRooms; ++i) {
             if (siteFacility.rooms[i].name[0] == '\0') {
                 break;
             } else if (
@@ -341,8 +340,8 @@ Room* handle_room(Room* const room) {
     set_flag(room->firstEntryUnsetsFlag, false);
     
     size_t totalOpts = 0;
-    size_t accessibleConns[maxConns] = {};
-    for (size_t i = 0; i < maxConns; ++i) {
+    size_t accessibleConns[maxConnsPerRoom] = {};
+    for (size_t i = 0; i < maxConnsPerRoom; ++i) {
         const unsigned connectsTo = room->connections[i];
         if (connectsTo == 0) {
             break;
@@ -375,7 +374,7 @@ void present_characters(const Room* const room) {
     while (true) {
         printf("Who do you want to speak to?\n");
         unsigned numOptions = 0;
-        for (size_t i = 0; i < maxChars; ++i) {
+        for (size_t i = 0; i < maxCharsPerRoom; ++i) {
             if (room->characters[i] == 0) {
                 break;
             }
@@ -427,8 +426,7 @@ Room* present_high_level_options(Room* room) {
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
-    size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
-    if (fromRoomID <= maxRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
+    if (fromRoomID <= countRooms) {
         room = &siteFacility.rooms[fromRoomID-1];
     } else {
         log_error("Room not found!\n");

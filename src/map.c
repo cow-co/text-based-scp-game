@@ -1,6 +1,7 @@
 #include "map.h"
 #include "tomlc17.h"
 #include "util.h"
+#include "counts.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -11,8 +12,8 @@ const size_t maxInteracts = sizeof(siteFacility.rooms[0].interactables) / sizeof
 const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
 const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
 const size_t maxConnections = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
-const size_t maxCharacters = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
 const size_t maxRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
+const size_t maxCharactersPerRoom = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
 
 int parse_room(
     const toml_datum_t* const parent, 
@@ -60,7 +61,7 @@ int parse_room(
     }
     if (roomCharactersDatum.type != TOML_UNKNOWN 
         && (roomCharactersDatum.type != TOML_ARRAY 
-            || roomCharactersDatum.u.arr.size >= maxCharacters 
+            || roomCharactersDatum.u.arr.size >= maxCharactersPerRoom 
             || roomCharactersDatum.u.arr.elem[0].type != TOML_INT64)
     ) {
         log_error("Room characters is not an array of integers, or is too long!\n");
@@ -166,7 +167,8 @@ int parse_facility(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < roomsDatum.u.arr.size; ++i) {
+    countRooms = roomsDatum.u.arr.size;
+    for (size_t i = 0; i < countRooms; ++i) {
         if (parse_room(
             &roomsDatum.u.arr.elem[i], 
             &siteFacility.rooms[i]
@@ -183,11 +185,13 @@ int parse_facility(const char* const filePath) {
 }
 
 void print_facility() {
-    for (size_t i = 0; i < maxRooms; ++i) {
-        if (siteFacility.rooms[i].name[0] == '\0') {
-            break;
-        }
-        printf("%s\n\t%s\n\tContains: %u\n", siteFacility.rooms[i].name, siteFacility.rooms[i].description, siteFacility.rooms[i].containedSCP);
+    for (size_t i = 0; i < countRooms; ++i) {
+        printf(
+            "%s\n\t%s\n\tContains: %u\n", 
+            siteFacility.rooms[i].name, 
+            siteFacility.rooms[i].description, 
+            siteFacility.rooms[i].containedSCP
+        );
     }
 }
 
@@ -264,13 +268,17 @@ int parse_interactables(const char* const filePath) {
 
     const toml_datum_t interactablesDatum = toml_get(tomlResult.toptab, "interactable");
     const size_t maxInteractables = sizeof(allInteractables) / sizeof(Interactable);
-    if (interactablesDatum.type != TOML_ARRAY || interactablesDatum.u.arr.elem[0].type != TOML_TABLE || interactablesDatum.u.arr.size > maxInteractables) {
+    if (interactablesDatum.type != TOML_ARRAY 
+        || interactablesDatum.u.arr.elem[0].type != TOML_TABLE 
+        || interactablesDatum.u.arr.size > maxInteractables
+    ) {
         log_error("Interactables should be an array of tables; or it is too long!\n");
         toml_free(tomlResult);
         return EOF;
     }
 
-    for (size_t i = 0; i < interactablesDatum.u.arr.size; ++i) {
+    countInteractables = interactablesDatum.u.arr.size;
+    for (size_t i = 0; i < countInteractables; ++i) {
         if (parse_interactable(&allInteractables[i], &interactablesDatum.u.arr.elem[i]) == EOF) {
             toml_free(tomlResult);
             return EOF;
@@ -282,10 +290,8 @@ int parse_interactables(const char* const filePath) {
 }
 
 bool are_any_rooms_breached() {
-    for (size_t i = 0; i < maxRooms; ++i) {
-        if (siteFacility.rooms[i].name[0] == '\0') {
-            break;
-        } else if (siteFacility.rooms[i].containmentBreached) {
+    for (size_t i = 0; i < countRooms; ++i) {
+        if (siteFacility.rooms[i].containmentBreached) {
             return true;
         }
     }

@@ -55,12 +55,6 @@ extern MTF allMTFs[32];
  */
 int parse_mtf_data(const char* const filePath);
 
-/**
- * @brief Displays all the MTFs to the screen
- * @details Currently mostly for debug purposes, but may later be extended to be used for actual gameplay
- */
-void print_mtfs();
-
 typedef struct {
     unsigned totalAmount;
     uint8_t containmentAlloc;
@@ -92,16 +86,23 @@ void print_organisation_details(const Organisation* const org);
 int parse_organisation_data(const char* const filePath, Organisation* const outOrg);
 
 /**
- * @brief Updates changes the reputation of the organisation by the given amount.
+ * @brief Updates the reputation of the organisation by the given amount.
  * 
  * @details Note: maximum is 100 rep, so this will clamp to min(100, rep+delta)
  */
 void change_reputation(Organisation* const org, const int16_t delta);
 
 /**
- * @brief Updates changes the reputation of the organisation by the given amount.
+ * @brief Updates the budget of the organisation by the given amount.
  * 
  * @details Note: This will protect against wraparound
  */
 void change_budget(Organisation* const org, const int16_t delta);
+
+/**
+ * @brief Updates the containment quality of the organisation by the given amount.
+ * 
+ * @details Note: This will protect against wraparound
+ */
+void change_containment_quality(Organisation* const org, const int16_t delta);
 #endif
