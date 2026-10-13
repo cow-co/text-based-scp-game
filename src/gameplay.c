@@ -293,7 +293,7 @@ void handle_org_management() {
         printf("[3] Repair broken containment rooms\n");
         printf("[4] Back\n");
 
-        int selection = read_numeric_input(3, 0);
+        int selection = read_numeric_input(4, 0);
 
         switch (selection) {
             case -1:
