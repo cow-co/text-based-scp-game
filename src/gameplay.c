@@ -4,6 +4,7 @@
 #include "characters.h"
 #include "conversation.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 
 
@@ -81,22 +82,21 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
             ++numOptions;
         }
     }
+
+    // Return to the top of the conversation tree if there are no more options available in this chain
+    if (numOptions == 0) {
+        return &(convo->nodes[0]);
+    }
+
     for (size_t i = 0; i < numOptions; ++i) {
         printf("[%zu] %s\n", i, node->options[accessibleNodes[i]].text);
     }
-    printf("[%zu] Exit\n", numOptions);
+    printf("[%zu] Back\n", numOptions);
 
-    int selection = -1;
-    const int count = fscanf(stdin, "%d", &selection);
-    if (count <= 0) {
-        printf("Could not read input!\n");
-    }
-    fscanf(stdin, "%*[^\n]");
-    if (selection < 0 || selection > numOptions) {
-        printf("Invalid Input!\n");
-    } else if (selection == numOptions) {
+    int selection = read_numeric_input(numOptions, 0);
+    if (selection == numOptions) {
         node = nullptr;
-    } else {
+    } else if (selection != -1) {
         const unsigned link = node->options[accessibleNodes[selection]].linksTo;
         node = &(convo->nodes[link - 1]);
     }
@@ -105,8 +105,7 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
 
 void conversation(const size_t id) {
     Conversation* convo = nullptr;
-    size_t countConvos = sizeof(allConvos) / sizeof(allConvos[0]);
-    if (id <= countConvos && allConvos[id-1].nodes[0].text[0] != '\0') {
+    if (id <= countConvos) {
         convo = &allConvos[id-1];
     } else {
         log_error("Conversation not found!\n");
@@ -121,12 +120,14 @@ void conversation(const size_t id) {
 }
 
 void handle_character(const size_t characterID) {
+    clear_screen();
     const Person* const character = &allPeople[characterID - 1];
     printf("You are talking to %s\nTheir role is: %s\n\nDescription: %s\n\n\n", character->name, character->role, character->description);
     conversation(character->conversation);
 }
 
 void handle_interactions(const Room* const room) {
+    clear_screen();
     printf("Here are the things you can interact with:\n");
     const size_t numInteractables = sizeof(room->interactables) / sizeof(room->interactables[0]);
     size_t numAccessible = 0;
@@ -149,9 +150,8 @@ void handle_interactions(const Room* const room) {
     }
     if (numAccessible == 0) {
         printf("No options available...\n");
-        return;
     }
-    printf("[%zu] Exit\n", numAccessible);
+    printf("[%zu] Back\n", numAccessible);
 
     bool exit = false;
     while (!exit) {
@@ -181,89 +181,249 @@ void handle_interactions(const Room* const room) {
     }
 }
 
+uint8_t allocate_budget(uint8_t slackCapacity) {
+    printf("What percentage of your budget do you wish to allocate? Your current allocations are:\n");
+    printf("Containment: %u percent\n", progress.org.budget.containmentAlloc);
+    printf("Research: %u percent\n", progress.org.budget.researchAlloc);
+    printf("Total budget: %u\n", progress.org.budget.totalAmount);
+    uint8_t selection = 0;
+
+    while (true) {
+        selection = read_numeric_input(slackCapacity, 0);
+
+        if (selection != -1) {
+            return selection;
+        }
+    }
+}
+
+void deploy_mtf() {
+    printf("Select an MTF to deploy:\n\n");
+
+    const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    unsigned options = 0;
+    unsigned assignable[numMTFs] = {};
+    for (size_t i = 0; i < numMTFs; ++i) {
+        const unsigned mtfID = progress.org.mtfs[i];
+        if (mtfID == 0) {
+            break;
+        }
+
+        const MTF* const mtf = &allMTFs[mtfID - 1];
+        if (mtf->deployed || mtf->active || mtf->personnel.operational == 0) {
+            continue;
+        }
+        assignable[options] = mtfID;
+        printf(
+            "[%zu] %s: %u operational, %u wounded, %u dead\n", 
+            i, 
+            mtf->name, 
+            mtf->personnel.operational, 
+            mtf->personnel.wounded, 
+            mtf->personnel.dead
+        );
+
+        ++options;
+    }
+    printf("[%u] Back\n", options);
+
+    unsigned selected = 0;
+    unsigned selection = 0;
+    while (true) {
+        selection = read_numeric_input(options, 0);
+
+        if (selection == options) {
+            return;
+        } else if (selection > -1) {
+            selected = progress.org.mtfs[assignable[selection]];
+        }
+    }
+
+    if (selected) {
+        printf("Deploying MTF...\n");
+        allMTFs[progress.org.mtfs[selected] - 1].deployed = true;
+        allMTFs[progress.org.mtfs[selected] - 1].deploymentWeeksRemaining = 4;
+    }
+}
+
+void repair_containment() {
+    clear_screen();
+    while (true) {
+        printf("Which room should we repair?\n");
+        size_t total = 0;
+        unsigned brokenRooms[countRooms] = {};
+        for (size_t i = 0; i < countRooms; ++i) {
+            if (siteFacility.rooms[i].name[0] == '\0') {
+                break;
+            } else if (
+                siteFacility.rooms[i].containmentBreached 
+                && progress.org.budget.totalAmount >= siteFacility.rooms[i].repairCost
+            ) {
+                printf(
+                    "[%zu] %s (Costs %u)\n", 
+                    total, 
+                    siteFacility.rooms[i].name, 
+                    siteFacility.rooms[i].repairCost
+                );
+                brokenRooms[total] = i;
+                ++total;
+            }
+        }
+        printf("[%zu] Back", total);
+
+        int selection = read_numeric_input(total, 0);
+
+        if (selection == total) {
+            return;
+        } else if (selection != -1) {
+            siteFacility.rooms[brokenRooms[selection]].containmentBreached = false;
+            change_budget(&progress.org, siteFacility.rooms[brokenRooms[selection]].repairCost);
+        }
+    }
+}
+
+void handle_org_management() {
+    clear_screen();
+    bool exit = false;
+    while (!exit) {
+        printf("You can do the following:\n\n");
+        printf("[0] Invest in better containment\n");
+        printf("[1] Send an MTF to contain a new anomaly\n");
+        printf("[2] Invest in more research\n");
+        printf("[3] Repair broken containment rooms\n");
+        printf("[4] Back\n");
+
+        int selection = read_numeric_input(4, 0);
+
+        switch (selection) {
+            case -1:
+                break;  // Error message shown by the input handler
+            case 0:
+                uint8_t newContainmentAlloc = allocate_budget(100 - progress.org.budget.researchAlloc);
+                progress.org.budget.containmentAlloc = newContainmentAlloc;
+                break;
+            case 1:
+                deploy_mtf();
+                break;
+            case 2:
+                uint8_t newResearchAlloc = allocate_budget(100 - progress.org.budget.containmentAlloc);
+                progress.org.budget.researchAlloc = newResearchAlloc;
+                break;
+            case 3:
+                repair_containment();
+                break;
+            case 4:
+                exit = true;
+                break;
+            default:
+                log_error("Invalid input!\n");
+                break;
+        }
+    }
+}
+
 /**
  * @brief Handles presenting and executing on options for the given room
- * @detail Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
- * @param room In/Out param, room to present, and overwritten with next selected room pointer, or nullptr if player chooses to exit.
- * @param maxConns Maximum number of connections from a room
- * @param maxChars Maximum number of characters a room can have
+ * @details Note: modifies the `room` pointer, setting it to the next selected room, or nullptr if exit is selected.
+ * @param room room to present
+ * @return Room* next room to go to, or `nullptr` if we want to quit
  */
-Room* handle_room(Room* const room, const size_t maxConns, const size_t maxChars, const size_t maxInts) {
+Room* handle_room(Room* const room) {
+    clear_screen();
     // Using that set_flag() does nothing if flagBit is zero
+    // FIXME This'll run _every_ time we enter the room, not just the first time! Set a "hasBeenEntered" flag on the room (separate from narrative flags 
+    // since another action might clobber the narrative flag later)
     set_flag(room->firstEntrySetsFlag, true);
     set_flag(room->firstEntryUnsetsFlag, false);
     
-    printf("You are in %s\n\t%s\n", room->name, room->description);
-    
-    size_t numConns = 0;
-    size_t accessibleConns[maxConns] = {};
-    for (size_t i = 0; i < maxConns; ++i) {
+    size_t totalOpts = 0;
+    size_t accessibleConns[maxConnections] = {};
+    for (size_t i = 0; i < maxConnections; ++i) {
         const unsigned connectsTo = room->connections[i];
         if (connectsTo == 0) {
             break;
         }
         if (can_enter_room(connectsTo - 1)) {
-            accessibleConns[numConns] = connectsTo;
-            ++numConns;
+            accessibleConns[totalOpts] = connectsTo;
+            printf("[%zu] Go to %s\n", i, siteFacility.rooms[connectsTo-1].name);
+            ++totalOpts;
         }
-    }
-    for (size_t i = 0; i < maxConns; ++i) {
-        if (accessibleConns[i] == 0) {
-            break;
-        }
-        printf("[%zu] Go to %s\n", i, siteFacility.rooms[accessibleConns[i]-1].name);
     }
     
-    size_t numChars = 0;
-    for (size_t i = 0; i < maxChars; ++i) {
-        if (room->characters[i] == 0) {
-            break;
-        }
-        printf("[%zu] Talk to %s\n", numConns+numChars, allPeople[room->characters[i]-1].name);
-        ++numChars;
-    }
-    
-    size_t totalOpts = numConns + numChars; // XXX Technically _could_ wrap around, but in practice won't.
     if (totalOpts == 0) {
         printf("No options available...\n");
         return nullptr;
     }
-    printf("[%zu] Interact\n", totalOpts);
-    ++totalOpts;
-    printf("[%zu] Exit Game\n", totalOpts);
+    printf("[%zu] Back\n", totalOpts);
 
-    int selection = -1;
-    const int count = fscanf(stdin, "%d", &selection);
-    if (count <= 0) {
-        log_error("Could not read input!\n");
-        return nullptr;
+    int selection = read_numeric_input(totalOpts, 0);
+
+    if (selection == totalOpts) {
+        return room;
+    } else if (selection != -1) {
+        return &siteFacility.rooms[accessibleConns[selection]-1];
     }
-    fscanf(stdin, "%*[^\n]");
-    if (selection < 0 || selection > totalOpts) {
-        printf("Invalid Input!\n");
-        return room;
-    } else if (selection == totalOpts - 1) {
-        handle_interactions(room);
-        return room;
-    } else if (selection == totalOpts) {
-        return nullptr;
-    } else if (selection < numConns){
-        const unsigned selectedRoomID = accessibleConns[selection];
-        progress.currentRoom = selectedRoomID;
-        return &(siteFacility.rooms[selectedRoomID-1]);
-    } else {
-        const int selectedPersonID = selection - numConns; // [1], [2] are rooms, [3] a convo; selection=3; numConns=2; 
-        const unsigned charID = room->characters[selectedPersonID];
-        handle_character(charID);
-        return room;
+
+    return room;
+}
+
+void present_characters(const Room* const room) {
+    while (true) {
+        printf("Who do you want to speak to?\n");
+        unsigned numOptions = 0;
+        for (size_t i = 0; i < maxCharactersPerRoom; ++i) {
+            if (room->characters[i] == 0) {
+                break;
+            }
+            printf("[%zu] %s\n", i, allPeople[room->characters[i]-1].name);
+            ++numOptions;
+        }
+        printf("[%u] Back\n", numOptions);
+        int selection = read_numeric_input(numOptions, 0);
+        if (selection == numOptions) {
+            return;
+        } else if (selection != -1) {
+            handle_character(room->characters[selection]);
+        }
     }
 }
 
+Room* present_high_level_options(Room* room) {
+    printf("You are in %s\n\t%s\n", room->name, room->description);
+    printf("[0] Go to another room\n");
+    printf("[1] Talk to people\n");
+    printf("[2] Interact with items\n");
+    printf("[3] Manage organisation\n");
+    printf("[4] Exit\n");
+
+    int selection = read_numeric_input(4, 0);
+
+    switch (selection) {
+        case -1:
+            break;  // Error message will already have been shown by the input handler
+        case 0:
+            return handle_room(room);
+        case 1:
+            present_characters(room);
+            return room;
+        case 2:
+            handle_interactions(room);
+            return room;
+        case 3:
+            handle_org_management();
+            return room;
+        case 4:
+            return nullptr;
+        default:
+            log_error("Could not read input!\n");
+            return room;
+    }
+    return room;
+}
 
 void traverse_rooms(const size_t fromRoomID) {
     Room* room = nullptr;
-    size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
-    if (fromRoomID <= countRooms && siteFacility.rooms[fromRoomID-1].name[0] != '\0') {
+    if (fromRoomID <= countRooms) {
         room = &siteFacility.rooms[fromRoomID-1];
     } else {
         log_error("Room not found!\n");
@@ -271,11 +431,8 @@ void traverse_rooms(const size_t fromRoomID) {
     }
 
     bool exit = false;
-    size_t maxConns = sizeof(room->connections) / sizeof(room->connections[0]);
-    size_t maxChars = sizeof(room->characters) / sizeof(room->characters[0]);
-    size_t maxInts = sizeof(room->interactables) / sizeof(room->interactables[0]);
     while (!exit) {
-        room = handle_room(room, maxConns, maxChars, maxInts);
+        room = present_high_level_options(room);
         if (room == nullptr) {
             break;
         }

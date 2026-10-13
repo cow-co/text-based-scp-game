@@ -1,9 +1,11 @@
 #include "organisation.h"
 #include "tomlc17.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 #include <tgmath.h>
 #include <string.h>
+#include <limits.h>
 
 
 MTF allMTFs[32] = {};
@@ -60,7 +62,8 @@ int parse_mtf_data(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < mtfsDatum.u.arr.size; ++i) {
+    countMTFs = mtfsDatum.u.arr.size;
+    for (size_t i = 0; i < countMTFs; ++i) {
         const toml_datum_t mtfDatum = mtfsDatum.u.arr.elem[i];
         if (mtfDatum.type != TOML_TABLE) {
             log_error("Each item in the mtf array in the MTFs config file must be a table!\n");
@@ -107,27 +110,11 @@ int parse_mtf_data(const char* const filePath) {
     return 0;
 }
 
-void print_mtfs() {
-    size_t countMTFs = sizeof(allMTFs) / sizeof(allMTFs[0]);
-    for (size_t i = 0; i < countMTFs; ++i) {
-        if (allMTFs[i].name[0] == '\0') {
-            return;
-        }
-        printf(
-            "%s\n\tOperational: %u\n\tWounded: %u\n\tDead: %u\n", 
-            allMTFs[i].name, 
-            allMTFs[i].personnel.operational, 
-            allMTFs[i].personnel.wounded, 
-            allMTFs[i].personnel.dead
-        );
-    }
-}
-
 void print_organisation_details(const Organisation* const org) {
     printf("Organisation details: \n \
             Budget: %u \n \
             Reputation: %u \n", 
-            org->budget, 
+            org->budget.totalAmount, 
             org->reputation
     );
 }
@@ -142,6 +129,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 
     const toml_datum_t repDatum = toml_seek(tomlResult.toptab, "organisation.reputation");
     const toml_datum_t budDatum = toml_seek(tomlResult.toptab, "organisation.budget");
+    const toml_datum_t qualDatum = toml_seek(tomlResult.toptab, "organisation.containmentQuality");
     const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
     const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "organisation.mtfs");
     if (repDatum.type != TOML_INT64) {
@@ -151,6 +139,11 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
     if (budDatum.type != TOML_INT64) {                                                                                                        
         log_error("In the organisation TOML, budget should be an integer!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (qualDatum.type != TOML_INT64) {                                                                                                        
+        log_error("In the organisation TOML, quality should be an integer!\n");
         toml_free(tomlResult);
         return EOF;
     }
@@ -164,7 +157,6 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         toml_free(tomlResult);
         return EOF;
     }
-
     if (repDatum.u.int64 < 0 || repDatum.u.int64 > 100) {
         log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!\n");
         toml_free(tomlResult);
@@ -175,7 +167,11 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         toml_free(tomlResult);
         return EOF;
     }
-
+    if (qualDatum.u.int64 < 0 || qualDatum.u.int64 > 100) {
+        log_error("In the organisation TOML, containment quality should be 0 <= quality <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
     if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
         log_error("In the organisation TOML, scps array is too long!\n");
         toml_free(tomlResult);
@@ -188,7 +184,8 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
     
     outOrg->reputation = repDatum.u.int64;
-    outOrg->budget = budDatum.u.int64;
+    outOrg->containmentQuality = qualDatum.u.int64;
+    outOrg->budget.totalAmount = budDatum.u.int64;
 
     for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {
         const toml_datum_t skipIDDatum = skipsDatum.u.arr.elem[i];
@@ -214,13 +211,34 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     return 0;
 }
 
-// TODO Test this
 void change_reputation(Organisation* const org, const int16_t delta) {
-    if (-org->reputation > delta) {
+    if (delta < 0 && -delta > org->reputation) {
         org->reputation = 0;
     } else if (org->reputation+delta > 100) {
         org->reputation = 100;
     } else {
         org->reputation = org->reputation + delta;
+    }
+}
+
+void change_budget(Organisation* const org, const int16_t delta) {
+    if (delta < 0 && -delta > org->budget.totalAmount) {
+        org->budget.totalAmount = 0;
+    } else if (delta > 0 && (UINT_MAX - org->budget.totalAmount) < delta) {
+        // Protect against wraparound
+        org->budget.totalAmount = UINT_MAX;
+    } else {
+        org->budget.totalAmount = org->budget.totalAmount + delta;
+    }
+}
+
+void change_containment_quality(Organisation* const org, const int16_t delta) {
+    if (delta < 0 && -delta > org->containmentQuality) {
+        org->containmentQuality = 0;
+    } else if (delta > 0 && org->containmentQuality + delta > 100) {
+        // Protect against wraparound
+        org->containmentQuality = 100;
+    } else {
+        org->containmentQuality = org->containmentQuality + delta;
     }
 }

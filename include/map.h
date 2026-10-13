@@ -10,6 +10,8 @@ typedef struct {
     unsigned interactables[8];
     unsigned containedSCP; // XXX Should probably make these ID refs into size_t (won't ever practically be a problem though)
     unsigned connections[8];
+    bool containmentBreached;
+    unsigned repairCost;
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
     unsigned requiresFlagSet;
@@ -25,6 +27,7 @@ extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
+bool are_any_rooms_breached();
 
 typedef struct {
     char name[64];

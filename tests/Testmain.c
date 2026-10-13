@@ -4,10 +4,17 @@
 #include "map.h"
 #include "characters.h"
 #include "util.h"
+#include "counts.h"
 #include <stdio.h>
 #include <string.h>
 
 void setUp() {
+    countChars = 100;
+    countConvos = 100;
+    countInteractables = 100;
+    countMTFs = 100;
+    countRooms = 100;
+    countSCPs = 100;
 }
 void tearDown() {
 }
@@ -106,6 +113,15 @@ void test_BadOrganisationFiles() {
     res = parse_organisation_data("tests/data/organisation/mtfs_not_array.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_organisation_data("tests/data/organisation/high_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/low_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
     res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 }
@@ -176,6 +192,48 @@ void test_RegeneratePersonnel() {
     TEST_ASSERT_EQUAL_UINT16(0, pers.wounded);
 }
 
+void test_ChangingRep() {
+    Organisation org = {};
+    org.reputation = 50U;
+    change_reputation(&org, -10);
+    TEST_ASSERT_EQUAL_UINT8(40, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 10);
+    TEST_ASSERT_EQUAL_UINT8(60, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 51);
+    TEST_ASSERT_EQUAL_UINT8(100, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, -51);
+    TEST_ASSERT_EQUAL_UINT8(0, org.reputation);
+
+    org.reputation = 50U;
+    change_reputation(&org, 255);
+    TEST_ASSERT_EQUAL_UINT8(100, org.reputation);
+}
+
+void test_ChangingBudget() {
+    Organisation org = {};
+    org.budget.totalAmount = 50000U;
+    change_budget(&org, -10000);
+    TEST_ASSERT_EQUAL_UINT(40000, org.budget.totalAmount);
+
+    org.budget.totalAmount = 50000U;
+    change_budget(&org, 10000);
+    TEST_ASSERT_EQUAL_UINT(60000, org.budget.totalAmount);
+
+    org.budget.totalAmount = 32767U;
+    change_budget(&org, -32768);
+    TEST_ASSERT_EQUAL_UINT(0, org.budget.totalAmount);
+
+    org.budget.totalAmount = UINT_MAX;
+    change_budget(&org, 1);
+    TEST_ASSERT_EQUAL_UINT(UINT_MAX, org.budget.totalAmount);
+}
+
 
 /**
  * Character Tests
@@ -215,6 +273,30 @@ void test_BadSCPFiles() {
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_scps("tests/data/characters/scps/no_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/high_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/low_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/high_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/low_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/neg_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_budget.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_scps("tests/data/characters/scps/aaaaaaaaaaaaa.toml");
@@ -302,6 +384,12 @@ void test_BadMaps() {
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_facility("tests/data/facility/bad_flag_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/neg_repair.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/no_repair.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_facility("tests/data/facility/aaaaa.toml");
@@ -452,6 +540,8 @@ int main() {
     RUN_TEST(test_GoodOrganisationFile);
     RUN_TEST(test_InflictCasualties);
     RUN_TEST(test_RegeneratePersonnel);
+    RUN_TEST(test_ChangingBudget);
+    RUN_TEST(test_ChangingRep);
 
     // Characters
     RUN_TEST(test_BadMTFFiles);

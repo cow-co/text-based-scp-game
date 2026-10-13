@@ -5,3 +5,4 @@ name = "Entryway"
 description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
 connections = [2]
 disabledFlag = -1
+repairCost = 100

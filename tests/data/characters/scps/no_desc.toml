@@ -1,3 +1,6 @@
 [[scp]]
 name = "SCP-049"
 objectClass = 1
+breachChance = 0.5
+containmentChance = 0.5
+budgetValue = 100

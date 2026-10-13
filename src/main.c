@@ -13,7 +13,7 @@ int main() {
         .currentRoom = 0,
         .narrativeFlags = 0,
         .org = {
-            .budget = 0,
+            .budget = {},
             .reputation = 0,
             .mtfs = {},
             .scps = {},

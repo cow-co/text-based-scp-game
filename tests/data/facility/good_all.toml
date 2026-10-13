@@ -10,14 +10,17 @@ firstEntrySetsFlag = 1
 flagRequired = 10
 firstEntryUnsetsFlag = 10
 containedSCP = 1
+repairCost = 100
 # Room 2
 [[room]]
 name = "Lobby"
 description = "Lobbying"
 connections = [3]
 firstEntrySetsFlag = 1
+repairCost = 100
 # Room 3
 [[room]]
 name = "Security"
 description = "CCTV gaming"
 connections = [2]
+repairCost = 100

@@ -4,4 +4,7 @@ current_room = 2
 [organisation]
 reputation = -5
 budget = 0
+researchAlloc = 0
+containAlloc = 0
 scps = []
+breachedRooms = []
