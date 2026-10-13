@@ -10,9 +10,6 @@
 
 char playerName[64] = {};
 Progress progress = {};
-size_t maxConnsPerRoom = sizeof(siteFacility.rooms[0].connections) / sizeof(siteFacility.rooms[0].connections[0]);
-size_t maxCharsPerRoom = sizeof(siteFacility.rooms[0].characters) / sizeof(siteFacility.rooms[0].characters[0]);
-size_t maxIntsPerRoom = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -340,8 +337,8 @@ Room* handle_room(Room* const room) {
     set_flag(room->firstEntryUnsetsFlag, false);
     
     size_t totalOpts = 0;
-    size_t accessibleConns[maxConnsPerRoom] = {};
-    for (size_t i = 0; i < maxConnsPerRoom; ++i) {
+    size_t accessibleConns[maxConnections] = {};
+    for (size_t i = 0; i < maxConnections; ++i) {
         const unsigned connectsTo = room->connections[i];
         if (connectsTo == 0) {
             break;
@@ -374,7 +371,7 @@ void present_characters(const Room* const room) {
     while (true) {
         printf("Who do you want to speak to?\n");
         unsigned numOptions = 0;
-        for (size_t i = 0; i < maxCharsPerRoom; ++i) {
+        for (size_t i = 0; i < maxCharactersPerRoom; ++i) {
             if (room->characters[i] == 0) {
                 break;
             }

@@ -3,6 +3,7 @@
 #include "util.h"
 #include "tomlc17.h"
 #include "map.h"
+#include "counts.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -45,7 +46,6 @@ int save_game(const char* const path) {
     fprintf(file, "]\n");
     fprintf(file, "breachedRooms = [");
     
-    const size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     isStart = true;
     for (size_t i = 0; i < countRooms; ++i) {
         if(siteFacility.rooms[i].containmentBreached) {
@@ -122,7 +122,6 @@ int load_game(const char* const path) {
     progress.currentRoom = roomDatum.u.int64;
     progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
 
-    const size_t countRooms = sizeof(siteFacility.rooms) / sizeof(siteFacility.rooms[0]);
     const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);
     const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
 

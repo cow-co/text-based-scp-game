@@ -10,4 +10,9 @@ extern size_t countSCPs;
 extern size_t countInteractables;
 extern size_t countConvos;
 
+extern const size_t maxInteracts;
+extern const size_t maxConnections;
+extern const size_t maxRooms;
+extern const size_t maxCharactersPerRoom;
+
 #endif

@@ -8,6 +8,7 @@
 
 Facility siteFacility = {};
 Interactable allInteractables[64] = {};
+
 const size_t maxInteracts = sizeof(siteFacility.rooms[0].interactables) / sizeof(siteFacility.rooms[0].interactables[0]);
 const size_t maxNameLength = sizeof(siteFacility.rooms[0].name);
 const size_t maxDescLength = sizeof(siteFacility.rooms[0].description);
