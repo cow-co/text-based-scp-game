@@ -157,7 +157,6 @@ void test_InflictCasualties() {
     TEST_ASSERT_EQUAL_UINT16(11, pers.wounded);
     TEST_ASSERT_EQUAL_UINT16(0, pers.operational);
 
-    // FIXME: Bug in the inflict_casualties; it doesn't check that deaths > operational prevents woundings
     pers.operational = 10;
     pers.wounded = 1;
     pers.dead = 5;

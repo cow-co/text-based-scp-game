@@ -388,15 +388,70 @@ void present_characters(const Room* const room) {
     }
 }
 
+void adjust_budget() {
+    // TODO Need to work out how the budget is actually affected and calculated. 
+    // Is there a separate "nest egg" from which one-off payments (eg repairs) are taken, and the percentage-allocations are of the monthly income?
+    // That way the allocations affect how much comes in to the "nest egg" every month. The monthly income is then a parameter affected by reputation
+}
+
+void adjust_reputation() {
+    // TODO Need to work out how the reputation is actually calculated
+    // Should be affected by 
+    // - number of contained SCPs
+    // - any ongoing breaches
+    // - number of breaches overall (track this!)
+    // - number of MTF losses
+    // - amount of budget going to research
+}
+
+void present_win_message() {
+    clear_screen();
+    printf("//////////////////////////////////////////\n");
+    printf("Congratulations, %s, you won the game by reaching week 52 (a whole year)!\n", playerName);
+    printf("//////////////////////////////////////////\n");
+}
+
+void present_loser_message() {
+    clear_screen();
+    printf("//////////////////////////////////////////\n");
+    printf("Unfortunately, %s, you lost the game by reaching 0 reputation or 0 funds...\n", playerName);
+    printf("//////////////////////////////////////////\n");
+}
+
+void advance_time() {
+    const size_t maxMTFsInOrg = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    for (size_t i = 0; i < maxMTFsInOrg; ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        } else {
+            MTF* const mtf = &allMTFs[progress.org.mtfs[i]-1];
+            if (mtf->deployed) {
+                --mtf->deploymentWeeksRemaining;
+                if (!mtf->deploymentWeeksRemaining) {
+                    mtf->deployed = false;
+                    printf("%s has returned from deployment!\n", mtf->name);
+                }
+            }
+        }
+    }
+    adjust_reputation();
+    if (progress.week % 4 == 0) {
+        adjust_budget();
+    }
+    ++progress.week;
+}
+
 Room* present_high_level_options(Room* room) {
     printf("You are in %s\n\t%s\n", room->name, room->description);
+    print_organisation_details(&progress.org);
     printf("[0] Go to another room\n");
     printf("[1] Talk to people\n");
     printf("[2] Interact with items\n");
     printf("[3] Manage organisation\n");
-    printf("[4] Exit\n");
+    printf("[4] Advance time by a week\n");
+    printf("[5] Exit\n");
 
-    int selection = read_numeric_input(4, 0);
+    int selection = read_numeric_input(5, 0);
 
     switch (selection) {
         case -1:
@@ -413,6 +468,9 @@ Room* present_high_level_options(Room* room) {
             handle_org_management();
             return room;
         case 4:
+            advance_time();
+            return room;
+        case 5:
             return nullptr;
         default:
             log_error("Could not read input!\n");
@@ -433,7 +491,13 @@ void traverse_rooms(const size_t fromRoomID) {
     bool exit = false;
     while (!exit) {
         room = present_high_level_options(room);
-        if (room == nullptr) {
+        if (progress.week == 52) {
+            present_win_message();
+            break;
+        } else if (progress.org.budget.totalAmount == 0 || progress.org.reputation == 0) {
+            present_loser_message();
+            break;
+        } else if (room == nullptr) {
             break;
         }
     }

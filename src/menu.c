@@ -22,6 +22,7 @@ int save_game(const char* const path) {
     fprintf(file, "narrative_flags = %ld\n", (long)(progress.narrativeFlags));
     fprintf(file, "player_name = \"%s\"\n", playerName);
     fprintf(file, "current_room = %zu\n", progress.currentRoom);
+    fprintf(file, "week = %hhu\n", progress.week);
     
     fprintf(file, "[organisation]\n");
     fprintf(file, "reputation = %u\n", progress.org.reputation);
@@ -93,6 +94,7 @@ int load_game(const char* const path) {
     
     const toml_datum_t nameDatum = toml_get(tomlResult.toptab, "player_name");
     const toml_datum_t roomDatum = toml_get(tomlResult.toptab, "current_room");
+    const toml_datum_t weekDatum = toml_get(tomlResult.toptab, "week");
     const toml_datum_t narrativeDatum = toml_get(tomlResult.toptab, "narrative_flags");
     const toml_datum_t orgDatum = toml_get(tomlResult.toptab, "organisation");
 
@@ -104,6 +106,11 @@ int load_game(const char* const path) {
     }
     if (roomDatum.type != TOML_INT64) {
         log_error("Room field is not an integer!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (weekDatum.type != TOML_INT64) {
+        log_error("Week field is not an integer!\n");
         toml_free(tomlResult);
         return EOF;
     }
@@ -120,6 +127,7 @@ int load_game(const char* const path) {
 
     strncpy(playerName, nameDatum.u.str.ptr, nameDatum.u.str.len);
     progress.currentRoom = roomDatum.u.int64;
+    progress.week = weekDatum.u.int64;
     progress.narrativeFlags = (_BitInt(64))narrativeDatum.u.int64;
 
     const size_t countSCPs = sizeof(progress.org.scps) / sizeof(progress.org.scps[0]);

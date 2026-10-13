@@ -25,6 +25,7 @@ typedef struct {
     size_t currentRoom;
     _BitInt(64) narrativeFlags;
     Organisation org;
+    uint8_t week;   // Success criterion is reaching week 52 (one year) so this should be more than big enough
 } Progress;
 
 extern char playerName[64];

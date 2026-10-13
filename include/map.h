@@ -8,7 +8,7 @@ typedef struct {
     char description[1024];
     unsigned characters[8]; 
     unsigned interactables[8];
-    unsigned containedSCP; // XXX Should probably make these ID refs into size_t (won't ever practically be a problem though)
+    unsigned containedSCP;
     unsigned connections[8];
     bool containmentBreached;
     unsigned repairCost;
