@@ -3,3 +3,4 @@ reputation = 10
 budget = 10
 scps = [1,2]
 mtfs = [2,1]
+containmentQuality = 50

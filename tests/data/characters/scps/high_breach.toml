@@ -1,0 +1,7 @@
+[[scp]]
+name = "SCP-049"
+description = "The Plague Doctor"
+objectClass = 1
+breachChance = 1.1
+containmentChance = 0.5
+budgetValue = 100

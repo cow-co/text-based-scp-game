@@ -129,6 +129,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 
     const toml_datum_t repDatum = toml_seek(tomlResult.toptab, "organisation.reputation");
     const toml_datum_t budDatum = toml_seek(tomlResult.toptab, "organisation.budget");
+    const toml_datum_t qualDatum = toml_seek(tomlResult.toptab, "organisation.containmentQuality");
     const toml_datum_t skipsDatum = toml_seek(tomlResult.toptab, "organisation.scps");
     const toml_datum_t mtfsDatum = toml_seek(tomlResult.toptab, "organisation.mtfs");
     if (repDatum.type != TOML_INT64) {
@@ -138,6 +139,11 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
     if (budDatum.type != TOML_INT64) {                                                                                                        
         log_error("In the organisation TOML, budget should be an integer!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (qualDatum.type != TOML_INT64) {                                                                                                        
+        log_error("In the organisation TOML, quality should be an integer!\n");
         toml_free(tomlResult);
         return EOF;
     }
@@ -151,7 +157,6 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         toml_free(tomlResult);
         return EOF;
     }
-
     if (repDatum.u.int64 < 0 || repDatum.u.int64 > 100) {
         log_error("In the organisation TOML, reputation should be 0 <= rep <= 100!\n");
         toml_free(tomlResult);
@@ -162,7 +167,11 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
         toml_free(tomlResult);
         return EOF;
     }
-
+    if (qualDatum.u.int64 < 0 || qualDatum.u.int64 > 100) {
+        log_error("In the organisation TOML, containment quality should be 0 <= quality <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
     if (skipsDatum.u.arr.size > sizeof(outOrg->scps) / sizeof(outOrg->scps[0])) {
         log_error("In the organisation TOML, scps array is too long!\n");
         toml_free(tomlResult);
@@ -175,6 +184,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     }
     
     outOrg->reputation = repDatum.u.int64;
+    outOrg->containmentQuality = qualDatum.u.int64;
     outOrg->budget.totalAmount = budDatum.u.int64;
 
     for (size_t i = 0; i < skipsDatum.u.arr.size; ++i) {

@@ -113,6 +113,15 @@ void test_BadOrganisationFiles() {
     res = parse_organisation_data("tests/data/organisation/mtfs_not_array.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_organisation_data("tests/data/organisation/high_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/low_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
     res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 }
@@ -266,6 +275,30 @@ void test_BadSCPFiles() {
     res = parse_scps("tests/data/characters/scps/no_desc.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_scps("tests/data/characters/scps/high_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/low_breach.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/high_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/low_contain.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/neg_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/no_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
     res = parse_scps("tests/data/characters/scps/aaaaaaaaaaaaa.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 }
@@ -351,6 +384,12 @@ void test_BadMaps() {
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_facility("tests/data/facility/bad_flag_id.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/neg_repair.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_facility("tests/data/facility/no_repair.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_facility("tests/data/facility/aaaaa.toml");
