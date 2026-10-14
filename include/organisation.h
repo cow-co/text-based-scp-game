@@ -90,19 +90,19 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
  * 
  * @details Note: maximum is 100 rep, so this will clamp to min(100, rep+delta)
  */
-void change_reputation(Organisation* const org, const int16_t delta);
+void change_reputation(Organisation* const org, const int8_t delta);
 
 /**
  * @brief Updates the budget of the organisation by the given amount.
  * 
  * @details Note: This will protect against wraparound
  */
-void change_budget(Organisation* const org, const int16_t delta);
+void change_budget(Organisation* const org, const int delta);
 
 /**
  * @brief Updates the containment quality of the organisation by the given amount.
  * 
  * @details Note: This will protect against wraparound
  */
-void change_containment_quality(Organisation* const org, const int16_t delta);
+void change_containment_quality(Organisation* const org, const int8_t delta);
 #endif

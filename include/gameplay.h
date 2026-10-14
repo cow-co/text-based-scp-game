@@ -5,6 +5,17 @@
 #include <limits.h>
 #include "organisation.h"
 
+typedef struct {
+    unsigned budgetScaling;
+    uint8_t scpRepScaling;
+    uint8_t researchRepScaling;
+    uint8_t repCostOnBreachPerWeek;
+    unsigned costPerMTFMem;
+    unsigned costPerWoundedMem;
+} GameplayConfig;
+extern GameplayConfig gameplayConfig;
+int parse_gameplay_config(const char* const filePath);
+
 /**
  * @brief Sets/unsets the given flag
  * @details NOTE: if `flagBit` is zero, does nothing (does not error)

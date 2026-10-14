@@ -86,6 +86,49 @@ void test_ChecksFlagUnsetAmongstMany() {
     TEST_ASSERT(check == false);
 }
 
+void test_BadGameplayConfigs() {
+    int res = parse_gameplay_config("tests/data/gameplay/high_breach_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/high_res_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/high_scp_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/low_breach_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/low_res_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/low_scp_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_breach_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_mem_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_res_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_scp_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_wounded_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+}
+
+void test_GoodGameplayConfig() {
+    int res = parse_gameplay_config("tests/data/gameplay/good.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+}
+
 /**
  * Organisation Tests
  */
@@ -210,7 +253,7 @@ void test_ChangingRep() {
     TEST_ASSERT_EQUAL_UINT8(0, org.reputation);
 
     org.reputation = 50U;
-    change_reputation(&org, 255);
+    change_reputation(&org, 127);
     TEST_ASSERT_EQUAL_UINT8(100, org.reputation);
 }
 
@@ -533,6 +576,8 @@ int main() {
     RUN_TEST(test_ChecksUnsetFlag);
     RUN_TEST(test_ChecksFlagSetAmongstMany);
     RUN_TEST(test_ChecksFlagUnsetAmongstMany);
+    RUN_TEST(test_BadGameplayConfigs);
+    RUN_TEST(test_GoodGameplayConfig);
 
     // Org
     RUN_TEST(test_BadOrganisationFiles);

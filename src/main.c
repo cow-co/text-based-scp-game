@@ -38,6 +38,9 @@ int main() {
     if (parse_facility("data/map.toml") == EOF) {
         return 1;
     }
+    if (parse_gameplay_config("data/gameplay.toml") == EOF) {
+        return 1;
+    }
     printf("////////// Finished Parsing Data Files //////////\n");
     present_menu();
 }

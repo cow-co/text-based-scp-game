@@ -5,11 +5,69 @@
 #include "conversation.h"
 #include "util.h"
 #include "counts.h"
+#include "tomlc17.h"
 #include <stdio.h>
 
 
 char playerName[64] = {};
 Progress progress = {};
+GameplayConfig gameplayConfig = {};
+
+int parse_gameplay_config(const char* const filePath) {
+    const toml_result_t tomlResult= toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not read gameplay config file!\n");
+        printf("%s\n", tomlResult.errmsg);
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    const toml_datum_t budgetScalingDatum = toml_get(tomlResult.toptab, "budgetScaling");
+    const toml_datum_t scpRepScalingDatum = toml_get(tomlResult.toptab, "scpRepScaling");
+    const toml_datum_t researchRepScalingDatum = toml_get(tomlResult.toptab, "researchRepScaling");
+    const toml_datum_t repCostOnBreachPerWeekDatum = toml_get(tomlResult.toptab, "repCostOnBreachPerWeek");
+    const toml_datum_t costPerMTFMemDatum = toml_get(tomlResult.toptab, "costPerMTFMem");
+    const toml_datum_t costPerWoundedMemDatum = toml_get(tomlResult.toptab, "costPerWoundedMem");
+    if (budgetScalingDatum.type != TOML_INT64 || budgetScalingDatum.u.int64 < 0) {
+        log_error("Budget scaling must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (scpRepScalingDatum.type != TOML_INT64 || scpRepScalingDatum.u.int64 < 0 || scpRepScalingDatum.u.int64 > 100) {
+        log_error("SCP Rep scaling must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (researchRepScalingDatum.type != TOML_INT64 || researchRepScalingDatum.u.int64 < 0 || researchRepScalingDatum.u.int64 > 100) {
+        log_error("Research Rep scaling must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (repCostOnBreachPerWeekDatum.type != TOML_INT64 || repCostOnBreachPerWeekDatum.u.int64 < 0 || repCostOnBreachPerWeekDatum.u.int64 > 100) {
+        log_error("Rep cost on breach must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (costPerMTFMemDatum.type != TOML_INT64 || costPerMTFMemDatum.u.int64 < 0) {
+        log_error("Cost per MTF member must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (costPerWoundedMemDatum.type != TOML_INT64 || costPerWoundedMemDatum.u.int64 < 0) {
+        log_error("Cost per wounded MTF member must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    gameplayConfig.budgetScaling = budgetScalingDatum.u.int64;
+    gameplayConfig.scpRepScaling = scpRepScalingDatum.u.int64;
+    gameplayConfig.researchRepScaling = researchRepScalingDatum.u.int64;
+    gameplayConfig.repCostOnBreachPerWeek = repCostOnBreachPerWeekDatum.u.int64;
+    gameplayConfig.costPerMTFMem = costPerMTFMemDatum.u.int64;
+    gameplayConfig.costPerWoundedMem = costPerWoundedMemDatum.u.int64;
+    toml_free(tomlResult);
+    return 0;
+}
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -389,19 +447,48 @@ void present_characters(const Room* const room) {
 }
 
 void adjust_budget() {
-    // TODO Need to work out how the budget is actually affected and calculated. 
-    // Is there a separate "nest egg" from which one-off payments (eg repairs) are taken, and the percentage-allocations are of the monthly income?
-    // That way the allocations affect how much comes in to the "nest egg" every month. The monthly income is then a parameter affected by reputation
+    const int baseIncome = progress.org.reputation * gameplayConfig.budgetScaling;
+    const int totalUnallocated = ((100 - progress.org.budget.containmentAlloc - progress.org.budget.researchAlloc) / 100);
+    const int remainingAfterAllocations = baseIncome * totalUnallocated;
+    
+    unsigned numOp = 0;
+    unsigned numWounded = 0;
+    for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        }
+        const unsigned mtfID = progress.org.mtfs[i];
+        numOp += allMTFs[mtfID-1].personnel.operational;
+        numWounded += allMTFs[mtfID-1].personnel.wounded;
+    }
+    const unsigned mtfCost = (numOp * gameplayConfig.costPerMTFMem) + (numWounded * gameplayConfig.costPerWoundedMem);
+
+    const int totalDelta = remainingAfterAllocations - mtfCost;
+    change_budget(&progress.org, totalDelta);
 }
 
 void adjust_reputation() {
-    // TODO Need to work out how the reputation is actually calculated
-    // Should be affected by 
-    // - number of contained SCPs
-    // - any ongoing breaches
-    // - number of breaches overall (track this!)
-    // - number of MTF losses
-    // - amount of budget going to research
+    int16_t repDelta = 0;
+    unsigned numSCPsContained = 0;
+    unsigned numBreaches = 0;
+    unsigned numWounded = 0;
+    
+    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
+        if (progress.org.scps[i] == 0) {
+            break;
+        }
+        ++numSCPsContained;
+    }
+    for (size_t i = 0; i < countRooms; ++i) {
+        if (siteFacility.rooms[i].containmentBreached) {
+            ++numBreaches;
+        }
+    }
+
+    repDelta = (numSCPsContained * gameplayConfig.scpRepScaling) 
+                + (progress.org.budget.researchAlloc * gameplayConfig.researchRepScaling) 
+                - (numBreaches * gameplayConfig.repCostOnBreachPerWeek);
+    change_reputation(&progress.org, repDelta);
 }
 
 void present_win_message() {
