@@ -211,7 +211,7 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
     return 0;
 }
 
-void change_reputation(Organisation* const org, const int16_t delta) {
+void change_reputation(Organisation* const org, const int8_t delta) {
     if (delta < 0 && -delta > org->reputation) {
         org->reputation = 0;
     } else if (org->reputation+delta > 100) {
@@ -221,7 +221,7 @@ void change_reputation(Organisation* const org, const int16_t delta) {
     }
 }
 
-void change_budget(Organisation* const org, const int16_t delta) {
+void change_budget(Organisation* const org, const int delta) {
     if (delta < 0 && -delta > org->budget.totalAmount) {
         org->budget.totalAmount = 0;
     } else if (delta > 0 && (UINT_MAX - org->budget.totalAmount) < delta) {
@@ -232,7 +232,7 @@ void change_budget(Organisation* const org, const int16_t delta) {
     }
 }
 
-void change_containment_quality(Organisation* const org, const int16_t delta) {
+void change_containment_quality(Organisation* const org, const int8_t delta) {
     if (delta < 0 && -delta > org->containmentQuality) {
         org->containmentQuality = 0;
     } else if (delta > 0 && org->containmentQuality + delta > 100) {

@@ -5,11 +5,69 @@
 #include "conversation.h"
 #include "util.h"
 #include "counts.h"
+#include "tomlc17.h"
 #include <stdio.h>
 
 
 char playerName[64] = {};
 Progress progress = {};
+GameplayConfig gameplayConfig = {};
+
+int parse_gameplay_config(const char* const filePath) {
+    const toml_result_t tomlResult= toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not read gameplay config file!\n");
+        printf("%s\n", tomlResult.errmsg);
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    const toml_datum_t budgetScalingDatum = toml_get(tomlResult.toptab, "budgetScaling");
+    const toml_datum_t scpRepScalingDatum = toml_get(tomlResult.toptab, "scpRepScaling");
+    const toml_datum_t researchRepScalingDatum = toml_get(tomlResult.toptab, "researchRepScaling");
+    const toml_datum_t repCostOnBreachPerWeekDatum = toml_get(tomlResult.toptab, "repCostOnBreachPerWeek");
+    const toml_datum_t costPerMTFMemDatum = toml_get(tomlResult.toptab, "costPerMTFMem");
+    const toml_datum_t costPerWoundedMemDatum = toml_get(tomlResult.toptab, "costPerWoundedMem");
+    if (budgetScalingDatum.type != TOML_INT64 || budgetScalingDatum.u.int64 < 0) {
+        log_error("Budget scaling must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (scpRepScalingDatum.type != TOML_INT64 || scpRepScalingDatum.u.int64 < 0 || scpRepScalingDatum.u.int64 > 100) {
+        log_error("SCP Rep scaling must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (researchRepScalingDatum.type != TOML_INT64 || researchRepScalingDatum.u.int64 < 0 || researchRepScalingDatum.u.int64 > 100) {
+        log_error("Research Rep scaling must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (repCostOnBreachPerWeekDatum.type != TOML_INT64 || repCostOnBreachPerWeekDatum.u.int64 < 0 || repCostOnBreachPerWeekDatum.u.int64 > 100) {
+        log_error("Rep cost on breach must be an integer >= 0 and <= 100!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (costPerMTFMemDatum.type != TOML_INT64 || costPerMTFMemDatum.u.int64 < 0) {
+        log_error("Cost per MTF member must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (costPerWoundedMemDatum.type != TOML_INT64 || costPerWoundedMemDatum.u.int64 < 0) {
+        log_error("Cost per wounded MTF member must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    gameplayConfig.budgetScaling = budgetScalingDatum.u.int64;
+    gameplayConfig.scpRepScaling = scpRepScalingDatum.u.int64;
+    gameplayConfig.researchRepScaling = researchRepScalingDatum.u.int64;
+    gameplayConfig.repCostOnBreachPerWeek = repCostOnBreachPerWeekDatum.u.int64;
+    gameplayConfig.costPerMTFMem = costPerMTFMemDatum.u.int64;
+    gameplayConfig.costPerWoundedMem = costPerWoundedMemDatum.u.int64;
+    toml_free(tomlResult);
+    return 0;
+}
 
 void set_flag(size_t flagBit, const bool set) {
     if (flagBit > 64) {
@@ -388,15 +446,99 @@ void present_characters(const Room* const room) {
     }
 }
 
+void adjust_budget() {
+    const int baseIncome = progress.org.reputation * gameplayConfig.budgetScaling;
+    const int totalUnallocated = ((100 - progress.org.budget.containmentAlloc - progress.org.budget.researchAlloc) / 100);
+    const int remainingAfterAllocations = baseIncome * totalUnallocated;
+    
+    unsigned numOp = 0;
+    unsigned numWounded = 0;
+    for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        }
+        const unsigned mtfID = progress.org.mtfs[i];
+        numOp += allMTFs[mtfID-1].personnel.operational;
+        numWounded += allMTFs[mtfID-1].personnel.wounded;
+    }
+    const unsigned mtfCost = (numOp * gameplayConfig.costPerMTFMem) + (numWounded * gameplayConfig.costPerWoundedMem);
+
+    const int totalDelta = remainingAfterAllocations - mtfCost;
+    change_budget(&progress.org, totalDelta);
+}
+
+void adjust_reputation() {
+    int16_t repDelta = 0;
+    unsigned numSCPsContained = 0;
+    unsigned numBreaches = 0;
+    unsigned numWounded = 0;
+    
+    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
+        if (progress.org.scps[i] == 0) {
+            break;
+        }
+        ++numSCPsContained;
+    }
+    for (size_t i = 0; i < countRooms; ++i) {
+        if (siteFacility.rooms[i].containmentBreached) {
+            ++numBreaches;
+        }
+    }
+
+    repDelta = (numSCPsContained * gameplayConfig.scpRepScaling) 
+                + (progress.org.budget.researchAlloc * gameplayConfig.researchRepScaling) 
+                - (numBreaches * gameplayConfig.repCostOnBreachPerWeek);
+    change_reputation(&progress.org, repDelta);
+}
+
+void present_win_message() {
+    clear_screen();
+    printf("//////////////////////////////////////////\n");
+    printf("Congratulations, %s, you won the game by reaching week 52 (a whole year)!\n", playerName);
+    printf("//////////////////////////////////////////\n");
+}
+
+void present_loser_message() {
+    clear_screen();
+    printf("//////////////////////////////////////////\n");
+    printf("Unfortunately, %s, you lost the game by reaching 0 reputation or 0 funds...\n", playerName);
+    printf("//////////////////////////////////////////\n");
+}
+
+void advance_time() {
+    const size_t maxMTFsInOrg = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
+    for (size_t i = 0; i < maxMTFsInOrg; ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        } else {
+            MTF* const mtf = &allMTFs[progress.org.mtfs[i]-1];
+            if (mtf->deployed) {
+                --mtf->deploymentWeeksRemaining;
+                if (!mtf->deploymentWeeksRemaining) {
+                    mtf->deployed = false;
+                    printf("%s has returned from deployment!\n", mtf->name);
+                }
+            }
+        }
+    }
+    adjust_reputation();
+    if (progress.week % 4 == 0) {
+        adjust_budget();
+    }
+    ++progress.week;
+}
+
 Room* present_high_level_options(Room* room) {
     printf("You are in %s\n\t%s\n", room->name, room->description);
+    print_organisation_details(&progress.org);
     printf("[0] Go to another room\n");
     printf("[1] Talk to people\n");
     printf("[2] Interact with items\n");
     printf("[3] Manage organisation\n");
-    printf("[4] Exit\n");
+    printf("[4] Advance time by a week\n");
+    printf("[5] Exit\n");
 
-    int selection = read_numeric_input(4, 0);
+    int selection = read_numeric_input(5, 0);
 
     switch (selection) {
         case -1:
@@ -413,6 +555,9 @@ Room* present_high_level_options(Room* room) {
             handle_org_management();
             return room;
         case 4:
+            advance_time();
+            return room;
+        case 5:
             return nullptr;
         default:
             log_error("Could not read input!\n");
@@ -433,7 +578,13 @@ void traverse_rooms(const size_t fromRoomID) {
     bool exit = false;
     while (!exit) {
         room = present_high_level_options(room);
-        if (room == nullptr) {
+        if (progress.week == 52) {
+            present_win_message();
+            break;
+        } else if (progress.org.budget.totalAmount == 0 || progress.org.reputation == 0) {
+            present_loser_message();
+            break;
+        } else if (room == nullptr) {
             break;
         }
     }

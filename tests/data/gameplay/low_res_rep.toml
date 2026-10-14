@@ -1,0 +1,10 @@
+# per percentage point of reputation
+budgetScaling = 1000
+# Percentage points reputation per contained SCP; object class then multiplies this
+scpRepScaling = 3
+# percentage points reputation per percentage point of research budget allocation
+researchRepScaling = -1
+repCostOnBreachPerWeek = 10
+
+costPerMTFMem = 1000
+costPerWoundedMem = 1100

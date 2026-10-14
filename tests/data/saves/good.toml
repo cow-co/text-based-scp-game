@@ -1,6 +1,7 @@
 narrative_flags = 14
 player_name = "test"
 current_room = 11
+week = 1
 [organisation]
 reputation = 18
 budget = 15
