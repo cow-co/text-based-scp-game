@@ -7,6 +7,7 @@
 #include "counts.h"
 #include "tomlc17.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 
 char playerName[64] = {};
@@ -28,6 +29,10 @@ int parse_gameplay_config(const char* const filePath) {
     const toml_datum_t repCostOnBreachPerWeekDatum = toml_get(tomlResult.toptab, "repCostOnBreachPerWeek");
     const toml_datum_t costPerMTFMemDatum = toml_get(tomlResult.toptab, "costPerMTFMem");
     const toml_datum_t costPerWoundedMemDatum = toml_get(tomlResult.toptab, "costPerWoundedMem");
+    const toml_datum_t mtfWoundingChanceDatum = toml_get(tomlResult.toptab, "mtfWoundingChance");
+    const toml_datum_t mtfDeathChanceDatum = toml_get(tomlResult.toptab, "mtfDeathChance");
+    const toml_datum_t scpCaptureChanceDatum = toml_get(tomlResult.toptab, "scpCaptureChance");
+    
     if (budgetScalingDatum.type != TOML_INT64 || budgetScalingDatum.u.int64 < 0) {
         log_error("Budget scaling must be an integer >= 0!\n");
         toml_free(tomlResult);
@@ -58,6 +63,21 @@ int parse_gameplay_config(const char* const filePath) {
         toml_free(tomlResult);
         return EOF;
     }
+    if (mtfWoundingChanceDatum.type != TOML_FP64 || mtfWoundingChanceDatum.u.fp64 < 0) {
+        log_error("Wounding chance must be a float >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (mtfDeathChanceDatum.type != TOML_FP64 || mtfDeathChanceDatum.u.fp64 < 0) {
+        log_error("Death chance must be a float >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+    if (scpCaptureChanceDatum.type != TOML_FP64 || scpCaptureChanceDatum.u.fp64 < 0) {
+        log_error("Capture chance must be a float >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
 
     gameplayConfig.budgetScaling = budgetScalingDatum.u.int64;
     gameplayConfig.scpRepScaling = scpRepScalingDatum.u.int64;
@@ -65,6 +85,10 @@ int parse_gameplay_config(const char* const filePath) {
     gameplayConfig.repCostOnBreachPerWeek = repCostOnBreachPerWeekDatum.u.int64;
     gameplayConfig.costPerMTFMem = costPerMTFMemDatum.u.int64;
     gameplayConfig.costPerWoundedMem = costPerWoundedMemDatum.u.int64;
+    gameplayConfig.mtfWoundingChance = costPerWoundedMemDatum.u.fp64;
+    gameplayConfig.mtfDeathChance = costPerWoundedMemDatum.u.fp64;
+    gameplayConfig.scpCaptureChance = scpCaptureChanceDatum.u.fp64;
+
     toml_free(tomlResult);
     return 0;
 }
@@ -471,7 +495,6 @@ void adjust_reputation() {
     int16_t repDelta = 0;
     unsigned numSCPsContained = 0;
     unsigned numBreaches = 0;
-    unsigned numWounded = 0;
     
     for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
         if (progress.org.scps[i] == 0) {
@@ -489,6 +512,81 @@ void adjust_reputation() {
                 + (progress.org.budget.researchAlloc * gameplayConfig.researchRepScaling) 
                 - (numBreaches * gameplayConfig.repCostOnBreachPerWeek);
     change_reputation(&progress.org, repDelta);
+}
+
+bool is_scp_in_containment(unsigned scpID) {
+    bool isContained = false;
+    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
+        if (progress.org.scps[i] == scpID) {
+            isContained = true;
+            break;
+        }
+    }
+    return isContained;
+}
+
+unsigned calculate_scp_capture() {
+    unsigned scpID = 0;
+
+    // Did we capture an SCP?
+    int randNum = (rand() / RAND_MAX / 100);    // Percentage
+    int chancePercent = (int)(gameplayConfig.scpCaptureChance * 100);
+    unsigned chances[countSCPs] = {}; // This is a VLA, yes, but the size is determined at compile-time, so it's pretty safe.
+    if (randNum <= chancePercent) {
+        // Which SCPs are eligible for capture?
+        for (size_t i = 0; i < countSCPs; ++i) {
+            unsigned prev = 0;
+            if (i > 0) {
+                prev = chances[i-1];
+            }
+            if (is_scp_in_containment(i+1)) {
+                chances[i] = prev;
+            } else {
+                chances[i] = (int)(allSCPs[i].captureProb * 100) + prev;
+            }
+        }
+        // We now have a max for our PRNG (will need to *100  and cast to int though...)
+        // Now we calculate the rand number, and see which SCP's "probability bucket" it falls into
+        int scpSelectionRand = (rand() / RAND_MAX / chances[countSCPs-1]);
+        for (size_t i = 0; i < countSCPs; ++i) {
+            if (scpSelectionRand <= chances[i]) {
+                scpID = i + 1;
+                break;
+            }
+        }
+    }
+    return scpID;
+}
+
+void capture_scp(unsigned id) {
+    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
+        if (progress.org.scps[i] == 0) {
+            progress.org.scps[i] = id;
+            break;
+        }
+    }
+}
+
+/**
+ * @brief Runs the RNG to check if any of the returning MTFs have contained a new SCP
+ * @details Ensure you run this BEFORE adjusting the `deploymentWeeksRemaining`, since this assumes that `deploymentWeeksRemaining=1` means the 
+ *          MTF is returning _this_ week. If you decrement `deploymentWeeksRemaining` and unset `deployed` before this, the MTF won't be picked up.
+ */
+void contain_scps() {
+    for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+        const unsigned mtfID = progress.org.mtfs[i];
+        if (mtfID == 0) {
+            break;
+        }
+        const MTF* mtf = &allMTFs[mtfID-1];
+        if (mtf->deployed && mtf->deploymentWeeksRemaining == 1) {
+            unsigned cappedSCP = calculate_scp_capture();
+            if (cappedSCP > 0) {
+                capture_scp(cappedSCP);
+            }
+            // TODO MTF losses on SCP-capture
+        }
+    }
 }
 
 void present_win_message() {

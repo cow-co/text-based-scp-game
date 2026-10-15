@@ -165,6 +165,21 @@ void test_BadOrganisationFiles() {
     res = parse_organisation_data("tests/data/organisation/no_quality.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_organisation_data("tests/data/organisation/high_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/low_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_death_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_wound_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
     res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 }

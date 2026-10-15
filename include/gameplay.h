@@ -12,6 +12,9 @@ typedef struct {
     uint8_t repCostOnBreachPerWeek;
     unsigned costPerMTFMem;
     unsigned costPerWoundedMem;
+    double mtfWoundingChance;
+    double mtfDeathChance;
+    double scpCaptureChance;
 } GameplayConfig;
 extern GameplayConfig gameplayConfig;
 int parse_gameplay_config(const char* const filePath);
