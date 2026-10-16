@@ -244,7 +244,6 @@ void handle_interactions(const Room* const room) {
 
     bool exit = false;
     while (!exit) {
-        // TODO Standardise on unsigned for IDs since we should never reach as high as would need a size_t (probably could do a like uint8 even...)
         char type;
         unsigned selection;
         const int count = fscanf(stdin, "%c%u", &type, &selection);
@@ -342,7 +341,6 @@ void repair_containment() {
         size_t total = 0;
         unsigned breachedSCPs[countSCPs] = {};
         for (size_t i = 0; i < countSCPs; ++i) {
-            // XXX We could pre-calculate this at load-time for each SCP and store in the SCP struct
             unsigned cost = gameplayConfig.repairBaseCost * allSCPs[i].objectClass;
             if (
                 allSCPs[i].breached 
@@ -628,6 +626,7 @@ void advance_time() {
                     printf("%s has returned from deployment!\n", mtf->name);
                 }
             }
+            regenerate(&mtf->personnel, 1, true);
         }
     }
     adjust_reputation();
