@@ -253,7 +253,7 @@ void handle_interactions(const Room* const room) {
     while (!exit) {
         char type;
         size_t selection;
-        const int count = fscanf(stdin, "%c%u", &type, &selection);
+        const int count = fscanf(stdin, "%c%zu", &type, &selection);
         if (count <= 0) {
             log_error("Could not read input!\n");
             return;
@@ -334,7 +334,7 @@ void deploy_mtf(bool toBreach) {
 
         ++options;
     }
-    printf("[%u] Back\n", options);
+    printf("[%zu] Back\n", options);
 
     size_t selected = 0;
     size_t selection = 0;
@@ -497,7 +497,7 @@ void present_characters(const Room* const room) {
             printf("[%zu] %s\n", i, allPeople[room->characters[i]-1].name);
             ++numOptions;
         }
-        printf("[%u] Back\n", numOptions);
+        printf("[%zu] Back\n", numOptions);
         int selection = read_numeric_input(numOptions, 0);
         if (selection == numOptions) {
             return;
@@ -651,6 +651,10 @@ void calculate_breaches() {
 }
 
 void recontain_scps() {
+    if (progress.org.activeBreachCount == 0) {
+        return;
+    }
+    
     size_t countAssigned = 0;
     for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
         if (progress.org.mtfs[i] == 0) {
@@ -663,18 +667,34 @@ void recontain_scps() {
 
     double mtfsPerBreach = (double)countAssigned / (double)progress.org.activeBreachCount;
     double factor = mtfsPerBreach * gameplayConfig.baseRecontainProb;
-    size_t numRecontained = factor * progress.org.activeBreachCount;    // TODO Make this the maximum, then rand() to decide the actual number
+    size_t numRecontained = factor * progress.org.activeBreachCount;
     numRecontained *= (rand() / RAND_MAX);
     size_t runningCount = 0;
 
     for (size_t i = 0; i < countSCPs; ++i) {
-        if (allSCPs[i].contained && allSCPs[i].breached) {
+        const bool needsContained = allSCPs[i].contained && allSCPs[i].breached;
+        if (needsContained && allSCPs[i].containmentRepaired) {
             allSCPs[i].breached = false;
             printf("MTFs have recontained %s!\n", allSCPs[i].name);
+            ++runningCount;
+            --progress.org.activeBreachCount;
+        } else if (needsContained) {
+            printf("MTFs cannot recontain %s until its containment chamber is repaired!\n", allSCPs[i].name);
             ++runningCount;
         }
         if (runningCount == numRecontained) {
             break;
+        }
+    }
+
+    if (progress.org.activeBreachCount == 0) {
+        for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+            if (progress.org.mtfs[i] == 0) {
+                break;
+            }
+            if (allMTFs[progress.org.mtfs[i]-1].recontaining) {
+                allMTFs[progress.org.mtfs[i]-1].recontaining = false;
+            }
         }
     }
 }

@@ -67,7 +67,7 @@ int save_game(const char* const path) {
         if (progress.org.mtfs[i]) {
             const size_t id = progress.org.mtfs[i];
             fprintf(file, "[[mtf]]\n");
-            fprintf(file, "id = %u\n", id);
+            fprintf(file, "id = %zu\n", id);
             fprintf(file, "recontaining = %s\n", allMTFs[i].recontaining ? "true" : "false");
             fprintf(file, "deployed = %s\n", allMTFs[i].deployed ? "true" : "false");
             fprintf(file, "deploymentWeeksRemaining = %u\n", allMTFs[i].deploymentWeeksRemaining);
