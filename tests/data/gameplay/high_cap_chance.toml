@@ -14,3 +14,5 @@ mtfWoundingChance = 0.3
 mtfDeathChance = 0.1
 
 scpCaptureChance = 1.3
+
+repairBaseCost = 1000

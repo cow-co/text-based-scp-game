@@ -8,9 +8,7 @@ typedef struct {
     char description[1024];
     unsigned characters[8]; 
     unsigned interactables[8];
-    unsigned containedSCP;
     unsigned connections[8];
-    bool containmentBreached;
     unsigned repairCost;
     unsigned firstEntrySetsFlag;
     unsigned firstEntryUnsetsFlag;
@@ -27,7 +25,6 @@ extern Facility siteFacility;
 
 int parse_facility(const char* const filePath);
 void print_facility();
-bool are_any_rooms_breached();
 
 typedef struct {
     char name[64];

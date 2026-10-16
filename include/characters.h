@@ -13,6 +13,8 @@ typedef struct {
     char name[64];
     char description[8192];
     SCPObjectClass objectClass;
+    bool contained;
+    bool breached;  // ie. it's nominally in containment but has escaped
     double breachProb;
     double captureProb;
     unsigned budgetValue;

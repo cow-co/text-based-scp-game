@@ -15,6 +15,7 @@ typedef struct {
     double mtfWoundingChance;
     double mtfDeathChance;
     double scpCaptureChance;
+    unsigned repairBaseCost;
 } GameplayConfig;
 extern GameplayConfig gameplayConfig;
 int parse_gameplay_config(const char* const filePath);

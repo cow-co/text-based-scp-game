@@ -32,6 +32,7 @@ int parse_gameplay_config(const char* const filePath) {
     const toml_datum_t mtfWoundingChanceDatum = toml_get(tomlResult.toptab, "mtfWoundingChance");
     const toml_datum_t mtfDeathChanceDatum = toml_get(tomlResult.toptab, "mtfDeathChance");
     const toml_datum_t scpCaptureChanceDatum = toml_get(tomlResult.toptab, "scpCaptureChance");
+    const toml_datum_t repairBaseCostDatum = toml_get(tomlResult.toptab, "repairBaseCost");
     
     if (budgetScalingDatum.type != TOML_INT64 || budgetScalingDatum.u.int64 < 0) {
         log_error("Budget scaling must be an integer >= 0!\n");
@@ -78,6 +79,11 @@ int parse_gameplay_config(const char* const filePath) {
         toml_free(tomlResult);
         return EOF;
     }
+    if (repairBaseCostDatum.type != TOML_INT64 || repairBaseCostDatum.u.int64 < 0) {
+        log_error("Repair cost must be an integer >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
 
     gameplayConfig.budgetScaling = budgetScalingDatum.u.int64;
     gameplayConfig.scpRepScaling = scpRepScalingDatum.u.int64;
@@ -88,6 +94,7 @@ int parse_gameplay_config(const char* const filePath) {
     gameplayConfig.mtfWoundingChance = costPerWoundedMemDatum.u.fp64;
     gameplayConfig.mtfDeathChance = costPerWoundedMemDatum.u.fp64;
     gameplayConfig.scpCaptureChance = scpCaptureChanceDatum.u.fp64;
+    gameplayConfig.repairBaseCost = repairBaseCostDatum.u.int64;
 
     toml_free(tomlResult);
     return 0;
@@ -331,23 +338,23 @@ void deploy_mtf() {
 void repair_containment() {
     clear_screen();
     while (true) {
-        printf("Which room should we repair?\n");
+        printf("Which SCP's containment should we repair?\n");
         size_t total = 0;
-        unsigned brokenRooms[countRooms] = {};
-        for (size_t i = 0; i < countRooms; ++i) {
-            if (siteFacility.rooms[i].name[0] == '\0') {
-                break;
-            } else if (
-                siteFacility.rooms[i].containmentBreached 
-                && progress.org.budget.totalAmount >= siteFacility.rooms[i].repairCost
+        unsigned breachedSCPs[countSCPs] = {};
+        for (size_t i = 0; i < countSCPs; ++i) {
+            // XXX We could pre-calculate this at load-time for each SCP and store in the SCP struct
+            unsigned cost = gameplayConfig.repairBaseCost * allSCPs[i].objectClass;
+            if (
+                allSCPs[i].breached 
+                && cost >= progress.org.budget.totalAmount
             ) {
                 printf(
                     "[%zu] %s (Costs %u)\n", 
                     total, 
-                    siteFacility.rooms[i].name, 
-                    siteFacility.rooms[i].repairCost
+                    allSCPs[i].name, 
+                    cost
                 );
-                brokenRooms[total] = i;
+                breachedSCPs[total] = i;
                 ++total;
             }
         }
@@ -358,8 +365,8 @@ void repair_containment() {
         if (selection == total) {
             return;
         } else if (selection != -1) {
-            siteFacility.rooms[brokenRooms[selection]].containmentBreached = false;
-            change_budget(&progress.org, siteFacility.rooms[brokenRooms[selection]].repairCost);
+            allSCPs[breachedSCPs[selection]].breached = false;
+            change_budget(&progress.org, gameplayConfig.repairBaseCost * allSCPs[selection].objectClass);
         }
     }
 }
@@ -496,14 +503,11 @@ void adjust_reputation() {
     unsigned numSCPsContained = 0;
     unsigned numBreaches = 0;
     
-    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
-        if (progress.org.scps[i] == 0) {
-            break;
+    for (size_t i = 0; i < countSCPs; ++i) {
+        if (allSCPs[i].contained) {
+            ++numSCPsContained;
         }
-        ++numSCPsContained;
-    }
-    for (size_t i = 0; i < countRooms; ++i) {
-        if (siteFacility.rooms[i].containmentBreached) {
+        if (allSCPs[i].breached) {
             ++numBreaches;
         }
     }
@@ -512,17 +516,6 @@ void adjust_reputation() {
                 + (progress.org.budget.researchAlloc * gameplayConfig.researchRepScaling) 
                 - (numBreaches * gameplayConfig.repCostOnBreachPerWeek);
     change_reputation(&progress.org, repDelta);
-}
-
-bool is_scp_in_containment(unsigned scpID) {
-    bool isContained = false;
-    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
-        if (progress.org.scps[i] == scpID) {
-            isContained = true;
-            break;
-        }
-    }
-    return isContained;
 }
 
 unsigned calculate_scp_capture() {
@@ -539,7 +532,7 @@ unsigned calculate_scp_capture() {
             if (i > 0) {
                 prev = chances[i-1];
             }
-            if (is_scp_in_containment(i+1)) {
+            if (allSCPs[i].contained) {
                 chances[i] = prev;
             } else {
                 chances[i] = (int)(allSCPs[i].captureProb * 100) + prev;
@@ -558,15 +551,6 @@ unsigned calculate_scp_capture() {
     return scpID;
 }
 
-void capture_scp(unsigned id) {
-    for (size_t i = 0; i < sizeof(progress.org.scps) / sizeof(progress.org.scps[0]); ++i) {
-        if (progress.org.scps[i] == 0) {
-            progress.org.scps[i] = id;
-            break;
-        }
-    }
-}
-
 /**
  * @brief Runs the RNG to check if any of the returning MTFs have contained a new SCP
  * @details Ensure you run this BEFORE adjusting the `deploymentWeeksRemaining`, since this assumes that `deploymentWeeksRemaining=1` means the 
@@ -582,7 +566,8 @@ void contain_scps() {
         if (mtf->deployed && mtf->deploymentWeeksRemaining == 1) {
             unsigned cappedSCP = calculate_scp_capture();
             if (cappedSCP > 0) {
-                capture_scp(cappedSCP);
+                allSCPs[cappedSCP-1].contained = true;
+                // TODO Add to budget
             }
             // TODO MTF losses on SCP-capture
         }
@@ -626,6 +611,10 @@ void advance_time() {
     ++progress.week;
 }
 
+void present_containment_inspection() {
+    // TODO FILL OUT
+}
+
 Room* present_high_level_options(Room* room) {
     printf("You are in %s\n\t%s\n", room->name, room->description);
     print_organisation_details(&progress.org);
@@ -634,7 +623,8 @@ Room* present_high_level_options(Room* room) {
     printf("[2] Interact with items\n");
     printf("[3] Manage organisation\n");
     printf("[4] Advance time by a week\n");
-    printf("[5] Exit\n");
+    printf("[5] Inspect Containment\n");
+    printf("[6] Exit\n");
 
     int selection = read_numeric_input(5, 0);
 
@@ -656,6 +646,9 @@ Room* present_high_level_options(Room* room) {
             advance_time();
             return room;
         case 5:
+            present_containment_inspection();
+            return room;
+        case 6:
             return nullptr;
         default:
             log_error("Could not read input!\n");

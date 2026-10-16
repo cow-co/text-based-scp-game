@@ -13,3 +13,5 @@ costPerWoundedMem = 1100
 mtfDeathChance = 0.1
 
 scpCaptureChance = 0.3
+
+repairBaseCost = 1000
