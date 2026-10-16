@@ -285,7 +285,7 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
     }
 }
 
-void deploy_mtf() {
+void deploy_mtf(bool toBreach) {
     printf("Select an MTF to deploy:\n\n");
 
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
@@ -298,7 +298,7 @@ void deploy_mtf() {
         }
 
         const MTF* const mtf = &allMTFs[mtfID - 1];
-        if (mtf->deployed || mtf->active || mtf->personnel.operational == 0) {
+        if (mtf->deployed || mtf->recontaining || mtf->personnel.operational == 0) {
             continue;
         }
         assignable[options] = mtfID;
@@ -327,10 +327,13 @@ void deploy_mtf() {
         }
     }
 
-    if (selected) {
+    if (selected && toBreach) {
         printf("Deploying MTF...\n");
         allMTFs[progress.org.mtfs[selected] - 1].deployed = true;
         allMTFs[progress.org.mtfs[selected] - 1].deploymentWeeksRemaining = 4;
+    } else if (selected) {
+        printf("Sending MTF to re-contain SCP(s)...\n");
+        allMTFs[progress.org.mtfs[selected] - 1].recontaining = true;
     }
 }
 
@@ -378,9 +381,10 @@ void handle_org_management() {
         printf("[1] Send an MTF to contain a new anomaly\n");
         printf("[2] Invest in more research\n");
         printf("[3] Repair broken containment rooms\n");
-        printf("[4] Back\n");
+        printf("[4] Send an MTF to respond to a breach\n");
+        printf("[5] Back\n");
 
-        int selection = read_numeric_input(4, 0);
+        int selection = read_numeric_input(5, 0);
 
         switch (selection) {
             case -1:
@@ -393,16 +397,19 @@ void handle_org_management() {
                 progress.org.containmentQuality = ((double)rand() / (double)RAND_MAX) * (maxQuality - minQuality) + minQuality;
                 break;
             case 1:
-                deploy_mtf();
+                deploy_mtf(false);
                 break;
             case 2:
                 uint8_t newResearchAlloc = allocate_budget(100 - progress.org.budget.containmentAlloc);
                 progress.org.budget.researchAlloc = newResearchAlloc;
                 break;
             case 3:
-                repair_containment();
+                repair_containment(true);
                 break;
             case 4:
+                deploy_mtf();
+                break;
+            case 5:
                 exit = true;
                 break;
             default:

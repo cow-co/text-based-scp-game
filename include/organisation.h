@@ -40,7 +40,7 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
 
 typedef struct {
   Personnel personnel;
-  bool active;
+  bool recontaining;
   char name[64];
   bool deployed;    // Hunting an SCP
   uint8_t deploymentWeeksRemaining;
