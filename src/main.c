@@ -23,7 +23,6 @@ int main() {
             .budget = {},
             .reputation = 0,
             .mtfs = {},
-            .scps = {},
         },
     };
     printf("////////// Parsing Data Files //////////\n");

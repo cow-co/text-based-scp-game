@@ -358,7 +358,7 @@ void repair_containment() {
                 ++total;
             }
         }
-        printf("[%zu] Back", total);
+        printf("[%zu] Back\n", total);
 
         int selection = read_numeric_input(total, 0);
 
@@ -551,6 +551,13 @@ unsigned calculate_scp_capture() {
     return scpID;
 }
 
+void calculate_mtf_casualties(MTF* const mtf, SCPObjectClass objClass) {
+    const uint16_t wounded = (gameplayConfig.mtfWoundingChance * objClass) / mtf->personnel.operational;
+    const uint16_t dead = (gameplayConfig.mtfDeathChance * objClass) / mtf->personnel.operational;
+    inflict_casualties(&mtf->personnel, wounded, dead);
+    printf("The MTF suffered %hu injured and %hu dead.\n", wounded, dead);
+}
+
 /**
  * @brief Runs the RNG to check if any of the returning MTFs have contained a new SCP
  * @details Ensure you run this BEFORE adjusting the `deploymentWeeksRemaining`, since this assumes that `deploymentWeeksRemaining=1` means the 
@@ -562,14 +569,15 @@ void contain_scps() {
         if (mtfID == 0) {
             break;
         }
-        const MTF* mtf = &allMTFs[mtfID-1];
+        MTF* const mtf = &allMTFs[mtfID-1];
         if (mtf->deployed && mtf->deploymentWeeksRemaining == 1) {
             unsigned cappedSCP = calculate_scp_capture();
             if (cappedSCP > 0) {
                 allSCPs[cappedSCP-1].contained = true;
-                // TODO Add to budget
+                progress.org.budget.totalAmount += allSCPs[cappedSCP-1].budgetValue;
+                printf("MTF %s captured %s!\n", mtf->name, allSCPs[cappedSCP-1].name);
+                calculate_mtf_casualties(mtf, allSCPs[cappedSCP-1].objectClass);
             }
-            // TODO MTF losses on SCP-capture
         }
     }
 }
@@ -578,14 +586,32 @@ void present_win_message() {
     clear_screen();
     printf("//////////////////////////////////////////\n");
     printf("Congratulations, %s, you won the game by reaching week 52 (a whole year)!\n", playerName);
-    printf("//////////////////////////////////////////\n");
+    printf("//////////////////////////////////////////\n\n");
+    printf("[0] Exit\n");
+    int input = read_numeric_input(0, 0);
+
+    if (input < 0) {
+        log_error("Could not read input!\n");
+        return;
+    } else if (input == 0) {
+        return;
+    }
 }
 
 void present_loser_message() {
     clear_screen();
     printf("//////////////////////////////////////////\n");
     printf("Unfortunately, %s, you lost the game by reaching 0 reputation or 0 funds...\n", playerName);
-    printf("//////////////////////////////////////////\n");
+    printf("//////////////////////////////////////////\n\n");
+    printf("[0] Exit\n");
+    int input = read_numeric_input(0, 0);
+
+    if (input < 0) {
+        log_error("Could not read input!\n");
+        return;
+    } else if (input == 0) {
+        return;
+    }
 }
 
 void advance_time() {
@@ -609,10 +635,42 @@ void advance_time() {
         adjust_budget();
     }
     ++progress.week;
+
+    if (progress.week == 52) {
+        present_win_message();
+        progress.gameOver = true;
+        return;
+    } else if (progress.org.budget.totalAmount == 0 || progress.org.reputation == 0) {
+        present_loser_message();
+        progress.gameOver = true;
+        return;
+    } 
 }
 
 void present_containment_inspection() {
-    // TODO FILL OUT
+    printf("You are in the containment sector. Please choose a containment chamber to inspect:\n\n");
+    size_t containedIDs[countSCPs] = {};    // TODO Let's standardise on size_t for IDs since it's safest and probably most idiomatic since IDs are effectively just array indices
+    size_t countContained = 0;
+    for (size_t i = 0; i < countSCPs; ++i) {
+        if (allSCPs[i].contained) {
+            containedIDs[i] = i + 1;
+            ++countContained;
+            printf("[%zu] %s\n", i, allSCPs[i].name);
+        }
+    }
+    printf("[%zu] Back\n", countContained);
+
+    int input = read_numeric_input(countContained, 0);
+
+    if (input < 0) {
+        log_error("Could not read input!\n");
+        return;
+    } else if (input == countContained) {
+        return;
+    } else {
+        // XXX This will need to change when breaches are implemented (to show a message when breached)
+        print_scp_details(containedIDs[input]);
+    }
 }
 
 Room* present_high_level_options(Room* room) {
@@ -626,7 +684,7 @@ Room* present_high_level_options(Room* room) {
     printf("[5] Inspect Containment\n");
     printf("[6] Exit\n");
 
-    int selection = read_numeric_input(5, 0);
+    int selection = read_numeric_input(6, 0);
 
     switch (selection) {
         case -1:
@@ -669,13 +727,7 @@ void traverse_rooms(const size_t fromRoomID) {
     bool exit = false;
     while (!exit) {
         room = present_high_level_options(room);
-        if (progress.week == 52) {
-            present_win_message();
-            break;
-        } else if (progress.org.budget.totalAmount == 0 || progress.org.reputation == 0) {
-            present_loser_message();
-            break;
-        } else if (room == nullptr) {
+        if (room == nullptr || progress.gameOver) {
             break;
         }
     }

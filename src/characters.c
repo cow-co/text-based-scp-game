@@ -101,6 +101,23 @@ int parse_scps(const char* const filePath) {
 }
 
 
+void print_scp_details(size_t scpID) {
+    printf("This is %s\n\t", allSCPs[scpID-1].name);
+    switch (allSCPs[scpID-1].objectClass) {
+        case SAFE:
+            printf("Object Class: SAFE\n\t");
+            break;
+        case EUCLID:
+            printf("Object Class: EUCLID\n\t");
+            break;
+        case KETER:
+            printf("Object Class: KETER\n\t");
+            break;
+    }
+    printf("%s\n\n", allSCPs[scpID-1].description);
+}
+
+
 int parse_people(const char* const filePath) {
     clear_array(sizeof(allPeople), &allPeople);
     const toml_result_t tomlResult = toml_parse_file_ex(filePath);

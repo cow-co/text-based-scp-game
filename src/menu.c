@@ -41,7 +41,7 @@ int save_game(const char* const path) {
             } else {
                 isStart = false;
             }
-            fprintf(file, "%u", i+1);
+            fprintf(file, "%zu", i+1);
         } 
     }
     fprintf(file, "]\n");
