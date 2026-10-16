@@ -418,10 +418,10 @@ void handle_org_management() {
                 progress.org.budget.researchAlloc = newResearchAlloc;
                 break;
             case 3:
-                repair_containment(true);
+                repair_containment();
                 break;
             case 4:
-                deploy_mtf();
+                deploy_mtf(true);
                 break;
             case 5:
                 exit = true;
