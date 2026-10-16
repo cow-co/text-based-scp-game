@@ -65,7 +65,7 @@ int save_game(const char* const path) {
     const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
         if (progress.org.mtfs[i]) {
-            const unsigned id = progress.org.mtfs[i];
+            const size_t id = progress.org.mtfs[i];
             fprintf(file, "[[mtf]]\n");
             fprintf(file, "id = %u\n", id);
             fprintf(file, "active = %s\n", allMTFs[i].active ? "true" : "false");

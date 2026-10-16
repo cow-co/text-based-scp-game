@@ -40,7 +40,7 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
 
 typedef struct {
   Personnel personnel;
-  bool active;  // Deployed to contain a breach? - TODO check if we actually want this separately from `deployed`
+  bool active;
   char name[64];
   bool deployed;    // Hunting an SCP
   uint8_t deploymentWeeksRemaining;
@@ -64,7 +64,7 @@ typedef struct {
 typedef struct {
     Budget budget;
     uint8_t reputation;
-    unsigned mtfs[8];
+    size_t mtfs[8];
     uint8_t containmentQuality;
 } Organisation;
 

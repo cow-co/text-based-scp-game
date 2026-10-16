@@ -128,8 +128,8 @@ bool test_flag(size_t flagBit) {
 
 bool can_enter_room(size_t roomID) {
     if (siteFacility.rooms[roomID].requiresFlagSet || siteFacility.rooms[roomID].requiresFlagUnset) {
-        const unsigned flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
-        const unsigned flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
+        const size_t flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
+        const size_t flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
         return (test_flag(flagRequired) && !test_flag(flagUnrequired));
     } else {
         return true;
@@ -186,7 +186,7 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
     if (selection == numOptions) {
         node = nullptr;
     } else if (selection != -1) {
-        const unsigned link = node->options[accessibleNodes[selection]].linksTo;
+        const size_t link = node->options[accessibleNodes[selection]].linksTo;
         node = &(convo->nodes[link - 1]);
     }
     return node;
@@ -220,7 +220,7 @@ void handle_interactions(const Room* const room) {
     printf("Here are the things you can interact with:\n");
     const size_t numInteractables = sizeof(room->interactables) / sizeof(room->interactables[0]);
     size_t numAccessible = 0;
-    unsigned accessible[numInteractables] = {};
+    size_t accessible[numInteractables] = {};
     for (size_t i = 0; i < numInteractables; ++i) {
         if (room->interactables[i] == 0) {
             break;
@@ -245,7 +245,7 @@ void handle_interactions(const Room* const room) {
     bool exit = false;
     while (!exit) {
         char type;
-        unsigned selection;
+        size_t selection;
         const int count = fscanf(stdin, "%c%u", &type, &selection);
         if (count <= 0) {
             log_error("Could not read input!\n");
@@ -289,10 +289,10 @@ void deploy_mtf() {
     printf("Select an MTF to deploy:\n\n");
 
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
-    unsigned options = 0;
-    unsigned assignable[numMTFs] = {};
+    size_t options = 0;
+    size_t assignable[numMTFs] = {};
     for (size_t i = 0; i < numMTFs; ++i) {
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         if (mtfID == 0) {
             break;
         }
@@ -315,8 +315,8 @@ void deploy_mtf() {
     }
     printf("[%u] Back\n", options);
 
-    unsigned selected = 0;
-    unsigned selection = 0;
+    size_t selected = 0;
+    size_t selection = 0;
     while (true) {
         selection = read_numeric_input(options, 0);
 
@@ -339,7 +339,7 @@ void repair_containment() {
     while (true) {
         printf("Which SCP's containment should we repair?\n");
         size_t total = 0;
-        unsigned breachedSCPs[countSCPs] = {};
+        size_t breachedSCPs[countSCPs] = {};
         for (size_t i = 0; i < countSCPs; ++i) {
             unsigned cost = gameplayConfig.repairBaseCost * allSCPs[i].objectClass;
             if (
@@ -418,15 +418,16 @@ void handle_org_management() {
 Room* handle_room(Room* const room) {
     clear_screen();
     // Using that set_flag() does nothing if flagBit is zero
-    // FIXME This'll run _every_ time we enter the room, not just the first time! Set a "hasBeenEntered" flag on the room (separate from narrative flags 
-    // since another action might clobber the narrative flag later)
-    set_flag(room->firstEntrySetsFlag, true);
-    set_flag(room->firstEntryUnsetsFlag, false);
+    if (!room->entered) {
+        set_flag(room->firstEntrySetsFlag, true);
+        set_flag(room->firstEntryUnsetsFlag, false);
+        room->entered = true;
+    }
     
     size_t totalOpts = 0;
     size_t accessibleConns[maxConnections] = {};
     for (size_t i = 0; i < maxConnections; ++i) {
-        const unsigned connectsTo = room->connections[i];
+        const size_t connectsTo = room->connections[i];
         if (connectsTo == 0) {
             break;
         }
@@ -457,7 +458,7 @@ Room* handle_room(Room* const room) {
 void present_characters(const Room* const room) {
     while (true) {
         printf("Who do you want to speak to?\n");
-        unsigned numOptions = 0;
+        size_t numOptions = 0;
         for (size_t i = 0; i < maxCharactersPerRoom; ++i) {
             if (room->characters[i] == 0) {
                 break;
@@ -480,13 +481,13 @@ void adjust_budget() {
     const int totalUnallocated = ((100 - progress.org.budget.containmentAlloc - progress.org.budget.researchAlloc) / 100);
     const int remainingAfterAllocations = baseIncome * totalUnallocated;
     
-    unsigned numOp = 0;
+    size_t numOp = 0;
     unsigned numWounded = 0;
     for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
         if (progress.org.mtfs[i] == 0) {
             break;
         }
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         numOp += allMTFs[mtfID-1].personnel.operational;
         numWounded += allMTFs[mtfID-1].personnel.wounded;
     }
@@ -516,8 +517,8 @@ void adjust_reputation() {
     change_reputation(&progress.org, repDelta);
 }
 
-unsigned calculate_scp_capture() {
-    unsigned scpID = 0;
+size_t calculate_scp_capture() {
+    size_t scpID = 0;
 
     // Did we capture an SCP?
     int randNum = (rand() / RAND_MAX / 100);    // Percentage
@@ -563,13 +564,13 @@ void calculate_mtf_casualties(MTF* const mtf, SCPObjectClass objClass) {
  */
 void contain_scps() {
     for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         if (mtfID == 0) {
             break;
         }
         MTF* const mtf = &allMTFs[mtfID-1];
         if (mtf->deployed && mtf->deploymentWeeksRemaining == 1) {
-            unsigned cappedSCP = calculate_scp_capture();
+            size_t cappedSCP = calculate_scp_capture();
             if (cappedSCP > 0) {
                 allSCPs[cappedSCP-1].contained = true;
                 progress.org.budget.totalAmount += allSCPs[cappedSCP-1].budgetValue;
@@ -648,7 +649,7 @@ void advance_time() {
 
 void present_containment_inspection() {
     printf("You are in the containment sector. Please choose a containment chamber to inspect:\n\n");
-    size_t containedIDs[countSCPs] = {};    // TODO Let's standardise on size_t for IDs since it's safest and probably most idiomatic since IDs are effectively just array indices
+    size_t containedIDs[countSCPs] = {};
     size_t countContained = 0;
     for (size_t i = 0; i < countSCPs; ++i) {
         if (allSCPs[i].contained) {

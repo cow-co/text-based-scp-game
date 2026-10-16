@@ -28,7 +28,7 @@ typedef struct {
     char name[64];
     char description[1024];
     char role[64];
-    size_t conversation;  // TODO Should probably ensure all IDs are unsigned
+    size_t conversation;
 } Person;
 
 extern Person allPeople[32];
