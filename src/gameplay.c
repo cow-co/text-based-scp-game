@@ -288,6 +288,20 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
 void deploy_mtf(bool toBreach) {
     printf("Select an MTF to deploy:\n\n");
 
+    if (toBreach){ 
+        bool anyBreaches = false;
+        for (size_t i = 0; i < countSCPs; ++i) {
+            if (allSCPs[i].contained && allSCPs[i].breached) {
+                anyBreaches = true;
+                break;
+            }
+        }
+        if (!anyBreaches) {
+            printf("No breaches to respond to...\n");
+            return;
+        }
+    }
+
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     size_t options = 0;
     size_t assignable[numMTFs] = {};
