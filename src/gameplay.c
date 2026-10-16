@@ -388,6 +388,9 @@ void handle_org_management() {
             case 0:
                 uint8_t newContainmentAlloc = allocate_budget(100 - progress.org.budget.researchAlloc);
                 progress.org.budget.containmentAlloc = newContainmentAlloc;
+                uint8_t maxQuality = newContainmentAlloc > 10 ? newContainmentAlloc - 10 : newContainmentAlloc;
+                uint8_t minQuality = maxQuality > 10 ? maxQuality - 10 : 0;
+                progress.org.containmentQuality = ((double)rand() / (double)RAND_MAX) * (maxQuality - minQuality) + minQuality;
                 break;
             case 1:
                 deploy_mtf();
@@ -619,7 +622,7 @@ void calculate_breaches() {
             continue;
         }
         double randChance = (double)rand() / (double)RAND_MAX;
-        // TODO Adjust based on containment quality
+        randChance *= progress.org.containmentQuality;
         if (randChance <= allSCPs[i].breachProb) {
             allSCPs[i].breached = true;
             allSCPs[i].containmentRepaired = false;
