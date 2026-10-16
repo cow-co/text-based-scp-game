@@ -5,6 +5,7 @@ objectClass = 1
 breachChance = 0.5
 containmentChance = 0.5
 budgetValue = 100
+breachedDesc = "test"
 [[scp]]
 name = "SCP-682"
 description = "Resilient Lizard"
@@ -12,3 +13,4 @@ objectClass = 2
 breachChance = 0.5
 containmentChance = 0.5
 budgetValue = 100
+breachedDesc = "test"

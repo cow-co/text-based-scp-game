@@ -11,7 +11,7 @@ scps = []
 breachedSCPs = [1]
 [[mtf]]
 id = 1
-active = false
+recontaining = false
 deployed = true
 deploymentWeeksRemaining = 2
 operational = 10

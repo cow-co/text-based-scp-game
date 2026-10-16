@@ -33,6 +33,7 @@ int parse_gameplay_config(const char* const filePath) {
     const toml_datum_t mtfDeathChanceDatum = toml_get(tomlResult.toptab, "mtfDeathChance");
     const toml_datum_t scpCaptureChanceDatum = toml_get(tomlResult.toptab, "scpCaptureChance");
     const toml_datum_t repairBaseCostDatum = toml_get(tomlResult.toptab, "repairBaseCost");
+    const toml_datum_t baseRecontainProbDatum = toml_get(tomlResult.toptab, "baseRecontainProb");
     
     if (budgetScalingDatum.type != TOML_INT64 || budgetScalingDatum.u.int64 < 0) {
         log_error("Budget scaling must be an integer >= 0!\n");
@@ -84,6 +85,11 @@ int parse_gameplay_config(const char* const filePath) {
         toml_free(tomlResult);
         return EOF;
     }
+    if (baseRecontainProbDatum.type != TOML_FP64 || baseRecontainProbDatum.u.fp64 < 0) {
+        log_error("Base recontainment chance must be a floating point >= 0!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
 
     gameplayConfig.budgetScaling = budgetScalingDatum.u.int64;
     gameplayConfig.scpRepScaling = scpRepScalingDatum.u.int64;
@@ -95,6 +101,7 @@ int parse_gameplay_config(const char* const filePath) {
     gameplayConfig.mtfDeathChance = costPerWoundedMemDatum.u.fp64;
     gameplayConfig.scpCaptureChance = scpCaptureChanceDatum.u.fp64;
     gameplayConfig.repairBaseCost = repairBaseCostDatum.u.int64;
+    gameplayConfig.baseRecontainProb = baseRecontainProbDatum.u.fp64;
 
     toml_free(tomlResult);
     return 0;
@@ -128,8 +135,8 @@ bool test_flag(size_t flagBit) {
 
 bool can_enter_room(size_t roomID) {
     if (siteFacility.rooms[roomID].requiresFlagSet || siteFacility.rooms[roomID].requiresFlagUnset) {
-        const unsigned flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
-        const unsigned flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
+        const size_t flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
+        const size_t flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
         return (test_flag(flagRequired) && !test_flag(flagUnrequired));
     } else {
         return true;
@@ -186,7 +193,7 @@ const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* n
     if (selection == numOptions) {
         node = nullptr;
     } else if (selection != -1) {
-        const unsigned link = node->options[accessibleNodes[selection]].linksTo;
+        const size_t link = node->options[accessibleNodes[selection]].linksTo;
         node = &(convo->nodes[link - 1]);
     }
     return node;
@@ -220,7 +227,7 @@ void handle_interactions(const Room* const room) {
     printf("Here are the things you can interact with:\n");
     const size_t numInteractables = sizeof(room->interactables) / sizeof(room->interactables[0]);
     size_t numAccessible = 0;
-    unsigned accessible[numInteractables] = {};
+    size_t accessible[numInteractables] = {};
     for (size_t i = 0; i < numInteractables; ++i) {
         if (room->interactables[i] == 0) {
             break;
@@ -245,8 +252,8 @@ void handle_interactions(const Room* const room) {
     bool exit = false;
     while (!exit) {
         char type;
-        unsigned selection;
-        const int count = fscanf(stdin, "%c%u", &type, &selection);
+        size_t selection;
+        const int count = fscanf(stdin, "%c%zu", &type, &selection);
         if (count <= 0) {
             log_error("Could not read input!\n");
             return;
@@ -285,20 +292,34 @@ uint8_t allocate_budget(uint8_t slackCapacity) {
     }
 }
 
-void deploy_mtf() {
+void deploy_mtf(bool toBreach) {
     printf("Select an MTF to deploy:\n\n");
 
+    if (toBreach){ 
+        bool anyBreaches = false;
+        for (size_t i = 0; i < countSCPs; ++i) {
+            if (allSCPs[i].contained && allSCPs[i].breached) {
+                anyBreaches = true;
+                break;
+            }
+        }
+        if (!anyBreaches) {
+            printf("No breaches to respond to...\n");
+            return;
+        }
+    }
+
     const size_t numMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
-    unsigned options = 0;
-    unsigned assignable[numMTFs] = {};
+    size_t options = 0;
+    size_t assignable[numMTFs] = {};
     for (size_t i = 0; i < numMTFs; ++i) {
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         if (mtfID == 0) {
             break;
         }
 
         const MTF* const mtf = &allMTFs[mtfID - 1];
-        if (mtf->deployed || mtf->active || mtf->personnel.operational == 0) {
+        if (mtf->deployed || mtf->recontaining || mtf->personnel.operational == 0) {
             continue;
         }
         assignable[options] = mtfID;
@@ -313,10 +334,10 @@ void deploy_mtf() {
 
         ++options;
     }
-    printf("[%u] Back\n", options);
+    printf("[%zu] Back\n", options);
 
-    unsigned selected = 0;
-    unsigned selection = 0;
+    size_t selected = 0;
+    size_t selection = 0;
     while (true) {
         selection = read_numeric_input(options, 0);
 
@@ -327,10 +348,13 @@ void deploy_mtf() {
         }
     }
 
-    if (selected) {
+    if (selected && toBreach) {
         printf("Deploying MTF...\n");
         allMTFs[progress.org.mtfs[selected] - 1].deployed = true;
         allMTFs[progress.org.mtfs[selected] - 1].deploymentWeeksRemaining = 4;
+    } else if (selected) {
+        printf("Sending MTF to re-contain SCP(s)...\n");
+        allMTFs[progress.org.mtfs[selected] - 1].recontaining = true;
     }
 }
 
@@ -339,7 +363,7 @@ void repair_containment() {
     while (true) {
         printf("Which SCP's containment should we repair?\n");
         size_t total = 0;
-        unsigned breachedSCPs[countSCPs] = {};
+        size_t breachedSCPs[countSCPs] = {};
         for (size_t i = 0; i < countSCPs; ++i) {
             unsigned cost = gameplayConfig.repairBaseCost * allSCPs[i].objectClass;
             if (
@@ -378,9 +402,10 @@ void handle_org_management() {
         printf("[1] Send an MTF to contain a new anomaly\n");
         printf("[2] Invest in more research\n");
         printf("[3] Repair broken containment rooms\n");
-        printf("[4] Back\n");
+        printf("[4] Send an MTF to respond to a breach\n");
+        printf("[5] Back\n");
 
-        int selection = read_numeric_input(4, 0);
+        int selection = read_numeric_input(5, 0);
 
         switch (selection) {
             case -1:
@@ -388,9 +413,12 @@ void handle_org_management() {
             case 0:
                 uint8_t newContainmentAlloc = allocate_budget(100 - progress.org.budget.researchAlloc);
                 progress.org.budget.containmentAlloc = newContainmentAlloc;
+                uint8_t maxQuality = newContainmentAlloc > 10 ? newContainmentAlloc - 10 : newContainmentAlloc;
+                uint8_t minQuality = maxQuality > 10 ? maxQuality - 10 : 0;
+                progress.org.containmentQuality = ((double)rand() / (double)RAND_MAX) * (maxQuality - minQuality) + minQuality;
                 break;
             case 1:
-                deploy_mtf();
+                deploy_mtf(false);
                 break;
             case 2:
                 uint8_t newResearchAlloc = allocate_budget(100 - progress.org.budget.containmentAlloc);
@@ -400,6 +428,9 @@ void handle_org_management() {
                 repair_containment();
                 break;
             case 4:
+                deploy_mtf(true);
+                break;
+            case 5:
                 exit = true;
                 break;
             default:
@@ -418,15 +449,16 @@ void handle_org_management() {
 Room* handle_room(Room* const room) {
     clear_screen();
     // Using that set_flag() does nothing if flagBit is zero
-    // FIXME This'll run _every_ time we enter the room, not just the first time! Set a "hasBeenEntered" flag on the room (separate from narrative flags 
-    // since another action might clobber the narrative flag later)
-    set_flag(room->firstEntrySetsFlag, true);
-    set_flag(room->firstEntryUnsetsFlag, false);
+    if (!room->entered) {
+        set_flag(room->firstEntrySetsFlag, true);
+        set_flag(room->firstEntryUnsetsFlag, false);
+        room->entered = true;
+    }
     
     size_t totalOpts = 0;
     size_t accessibleConns[maxConnections] = {};
     for (size_t i = 0; i < maxConnections; ++i) {
-        const unsigned connectsTo = room->connections[i];
+        const size_t connectsTo = room->connections[i];
         if (connectsTo == 0) {
             break;
         }
@@ -457,7 +489,7 @@ Room* handle_room(Room* const room) {
 void present_characters(const Room* const room) {
     while (true) {
         printf("Who do you want to speak to?\n");
-        unsigned numOptions = 0;
+        size_t numOptions = 0;
         for (size_t i = 0; i < maxCharactersPerRoom; ++i) {
             if (room->characters[i] == 0) {
                 break;
@@ -465,7 +497,7 @@ void present_characters(const Room* const room) {
             printf("[%zu] %s\n", i, allPeople[room->characters[i]-1].name);
             ++numOptions;
         }
-        printf("[%u] Back\n", numOptions);
+        printf("[%zu] Back\n", numOptions);
         int selection = read_numeric_input(numOptions, 0);
         if (selection == numOptions) {
             return;
@@ -480,13 +512,13 @@ void adjust_budget() {
     const int totalUnallocated = ((100 - progress.org.budget.containmentAlloc - progress.org.budget.researchAlloc) / 100);
     const int remainingAfterAllocations = baseIncome * totalUnallocated;
     
-    unsigned numOp = 0;
+    size_t numOp = 0;
     unsigned numWounded = 0;
     for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
         if (progress.org.mtfs[i] == 0) {
             break;
         }
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         numOp += allMTFs[mtfID-1].personnel.operational;
         numWounded += allMTFs[mtfID-1].personnel.wounded;
     }
@@ -498,26 +530,15 @@ void adjust_budget() {
 
 void adjust_reputation() {
     int16_t repDelta = 0;
-    unsigned numSCPsContained = 0;
-    unsigned numBreaches = 0;
-    
-    for (size_t i = 0; i < countSCPs; ++i) {
-        if (allSCPs[i].contained) {
-            ++numSCPsContained;
-        }
-        if (allSCPs[i].breached) {
-            ++numBreaches;
-        }
-    }
 
-    repDelta = (numSCPsContained * gameplayConfig.scpRepScaling) 
+    repDelta = (progress.org.numContained * gameplayConfig.scpRepScaling) 
                 + (progress.org.budget.researchAlloc * gameplayConfig.researchRepScaling) 
-                - (numBreaches * gameplayConfig.repCostOnBreachPerWeek);
+                - (progress.org.activeBreachCount * gameplayConfig.repCostOnBreachPerWeek);
     change_reputation(&progress.org, repDelta);
 }
 
-unsigned calculate_scp_capture() {
-    unsigned scpID = 0;
+size_t calculate_scp_capture() {
+    size_t scpID = 0;
 
     // Did we capture an SCP?
     int randNum = (rand() / RAND_MAX / 100);    // Percentage
@@ -563,15 +584,16 @@ void calculate_mtf_casualties(MTF* const mtf, SCPObjectClass objClass) {
  */
 void contain_scps() {
     for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
-        const unsigned mtfID = progress.org.mtfs[i];
+        const size_t mtfID = progress.org.mtfs[i];
         if (mtfID == 0) {
             break;
         }
         MTF* const mtf = &allMTFs[mtfID-1];
         if (mtf->deployed && mtf->deploymentWeeksRemaining == 1) {
-            unsigned cappedSCP = calculate_scp_capture();
+            size_t cappedSCP = calculate_scp_capture();
             if (cappedSCP > 0) {
                 allSCPs[cappedSCP-1].contained = true;
+                ++progress.org.numContained;
                 progress.org.budget.totalAmount += allSCPs[cappedSCP-1].budgetValue;
                 printf("MTF %s captured %s!\n", mtf->name, allSCPs[cappedSCP-1].name);
                 calculate_mtf_casualties(mtf, allSCPs[cappedSCP-1].objectClass);
@@ -612,6 +634,71 @@ void present_loser_message() {
     }
 }
 
+void calculate_breaches() {
+    for (size_t i = 0; i < countSCPs; ++i) {
+        if (allSCPs[i].breached || !allSCPs[i].contained) {
+            continue;
+        }
+        double randChance = (double)rand() / (double)RAND_MAX;
+        randChance *= progress.org.containmentQuality;
+        if (randChance <= allSCPs[i].breachProb) {
+            allSCPs[i].breached = true;
+            allSCPs[i].containmentRepaired = false;
+            ++progress.org.activeBreachCount;
+            printf("%s has breached containment!\n", allSCPs[i].name);
+        }
+    }
+}
+
+void recontain_scps() {
+    if (progress.org.activeBreachCount == 0) {
+        return;
+    }
+    
+    size_t countAssigned = 0;
+    for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+        if (progress.org.mtfs[i] == 0) {
+            break;
+        }
+        if (allMTFs[progress.org.mtfs[i]-1].recontaining) {
+            ++countAssigned;
+        }
+    }
+
+    double mtfsPerBreach = (double)countAssigned / (double)progress.org.activeBreachCount;
+    double factor = mtfsPerBreach * gameplayConfig.baseRecontainProb;
+    size_t numRecontained = factor * progress.org.activeBreachCount;
+    numRecontained *= (rand() / RAND_MAX);
+    size_t runningCount = 0;
+
+    for (size_t i = 0; i < countSCPs; ++i) {
+        const bool needsContained = allSCPs[i].contained && allSCPs[i].breached;
+        if (needsContained && allSCPs[i].containmentRepaired) {
+            allSCPs[i].breached = false;
+            printf("MTFs have recontained %s!\n", allSCPs[i].name);
+            ++runningCount;
+            --progress.org.activeBreachCount;
+        } else if (needsContained) {
+            printf("MTFs cannot recontain %s until its containment chamber is repaired!\n", allSCPs[i].name);
+            ++runningCount;
+        }
+        if (runningCount == numRecontained) {
+            break;
+        }
+    }
+
+    if (progress.org.activeBreachCount == 0) {
+        for (size_t i = 0; i < sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]); ++i) {
+            if (progress.org.mtfs[i] == 0) {
+                break;
+            }
+            if (allMTFs[progress.org.mtfs[i]-1].recontaining) {
+                allMTFs[progress.org.mtfs[i]-1].recontaining = false;
+            }
+        }
+    }
+}
+
 void advance_time() {
     const size_t maxMTFsInOrg = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < maxMTFsInOrg; ++i) {
@@ -629,6 +716,8 @@ void advance_time() {
             regenerate(&mtf->personnel, 1, true);
         }
     }
+    recontain_scps();
+    calculate_breaches();
     adjust_reputation();
     if (progress.week % 4 == 0) {
         adjust_budget();
@@ -648,26 +737,25 @@ void advance_time() {
 
 void present_containment_inspection() {
     printf("You are in the containment sector. Please choose a containment chamber to inspect:\n\n");
-    size_t containedIDs[countSCPs] = {};    // TODO Let's standardise on size_t for IDs since it's safest and probably most idiomatic since IDs are effectively just array indices
-    size_t countContained = 0;
+    size_t containedIDs[progress.org.numContained] = {};
+    size_t current = 0;
     for (size_t i = 0; i < countSCPs; ++i) {
         if (allSCPs[i].contained) {
-            containedIDs[i] = i + 1;
-            ++countContained;
-            printf("[%zu] %s\n", i, allSCPs[i].name);
+            containedIDs[current] = i + 1;
+            ++current;
+            printf("[%zu] %s\n", current, allSCPs[i].name);
         }
     }
-    printf("[%zu] Back\n", countContained);
+    printf("[%zu] Back\n", progress.org.numContained);
 
-    int input = read_numeric_input(countContained, 0);
+    int input = read_numeric_input(progress.org.numContained, 0);
 
     if (input < 0) {
         log_error("Could not read input!\n");
         return;
-    } else if (input == countContained) {
+    } else if (input == progress.org.numContained) {
         return;
     } else {
-        // XXX This will need to change when breaches are implemented (to show a message when breached)
         print_scp_details(containedIDs[input]);
     }
 }

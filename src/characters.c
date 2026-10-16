@@ -43,6 +43,7 @@ int parse_scps(const char* const filePath) {
         }
         const toml_datum_t scpNameDatum = toml_get(scpDatum, "name");
         const toml_datum_t scpDescriptionDatum = toml_get(scpDatum, "description");
+        const toml_datum_t breachedDescDatum = toml_get(scpDatum, "breachedDesc");
         const toml_datum_t scpObjClassDatum = toml_get(scpDatum, "objectClass");
         const toml_datum_t scpBreachChanceDatum = toml_get(scpDatum, "breachChance");
         const toml_datum_t scpContChanceDatum = toml_get(scpDatum, "containmentChance");
@@ -55,6 +56,11 @@ int parse_scps(const char* const filePath) {
         }
         if (scpDescriptionDatum.type != TOML_STRING) {
             log_error("SCP descriptions must be strings!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
+        if (breachedDescDatum.type != TOML_STRING) {
+            log_error("SCP breach descriptions must be strings!\n");
             toml_free(tomlResult);
             return EOF;
         }
@@ -88,9 +94,15 @@ int parse_scps(const char* const filePath) {
             toml_free(tomlResult);
             return EOF;
         }
+        if (breachedDescDatum.u.str.len >= sizeof(allSCPs[i].breachedDesc)) {
+            log_error("SCP breach description is too long!\n");
+            toml_free(tomlResult);
+            return EOF;
+        }
 
         strncpy(allSCPs[i].name, scpNameDatum.u.str.ptr, scpNameDatum.u.str.len);
         strncpy(allSCPs[i].description, scpDescriptionDatum.u.str.ptr, scpDescriptionDatum.u.str.len);
+        strncpy(allSCPs[i].breachedDesc, breachedDescDatum.u.str.ptr, breachedDescDatum.u.str.len);
         allSCPs[i].objectClass = scpObjClassDatum.u.int64;
         allSCPs[i].breachProb = scpBreachChanceDatum.u.fp64;
         allSCPs[i].captureProb = scpContChanceDatum.u.fp64;
@@ -114,7 +126,11 @@ void print_scp_details(size_t scpID) {
             printf("Object Class: KETER\n\t");
             break;
     }
-    printf("%s\n\n", allSCPs[scpID-1].description);
+    if (allSCPs[scpID-1].breached) {
+        printf("%s\n\n", allSCPs[scpID-1].breachedDesc);
+    } else {
+        printf("%s\n\n", allSCPs[scpID-1].description);
+    }
 }
 
 

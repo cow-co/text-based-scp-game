@@ -65,10 +65,10 @@ int save_game(const char* const path) {
     const size_t countMTFs = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < countMTFs; ++i) {
         if (progress.org.mtfs[i]) {
-            const unsigned id = progress.org.mtfs[i];
+            const size_t id = progress.org.mtfs[i];
             fprintf(file, "[[mtf]]\n");
-            fprintf(file, "id = %u\n", id);
-            fprintf(file, "active = %s\n", allMTFs[i].active ? "true" : "false");
+            fprintf(file, "id = %zu\n", id);
+            fprintf(file, "recontaining = %s\n", allMTFs[i].recontaining ? "true" : "false");
             fprintf(file, "deployed = %s\n", allMTFs[i].deployed ? "true" : "false");
             fprintf(file, "deploymentWeeksRemaining = %u\n", allMTFs[i].deploymentWeeksRemaining);
             fprintf(file, "operational = %d\n", allMTFs[id].personnel.operational);
@@ -207,7 +207,7 @@ int load_game(const char* const path) {
     if (mtfDatum.type != TOML_UNKNOWN && mtfDatum.u.arr.size > 0) {
         for (size_t i = 0; i < mtfDatum.u.arr.size; ++i) {
             const toml_datum_t mtfIDDatum = toml_get(mtfDatum.u.arr.elem[i], "id");
-            const toml_datum_t mtfActiveDatum = toml_get(mtfDatum.u.arr.elem[i], "active");
+            const toml_datum_t mtfActiveDatum = toml_get(mtfDatum.u.arr.elem[i], "recontaining");
             const toml_datum_t mtfDeployedDatum = toml_get(mtfDatum.u.arr.elem[i], "deployed");
             const toml_datum_t mtfWeeksRemDatum = toml_get(mtfDatum.u.arr.elem[i], "deploymentWeeksRemaining");
             const toml_datum_t mtfOperationalDatum = toml_get(mtfDatum.u.arr.elem[i], "operational");
@@ -219,7 +219,7 @@ int load_game(const char* const path) {
                 return EOF;
             }
             if (mtfActiveDatum.type != TOML_BOOLEAN) {
-                log_error("MTF active must be a boolean!\n");
+                log_error("MTF recontaining must be a boolean!\n");
                 toml_free(tomlResult);
                 return EOF;
             }
@@ -250,7 +250,7 @@ int load_game(const char* const path) {
             }
 
             progress.org.mtfs[i] = mtfIDDatum.u.int64;
-            allMTFs[mtfIDDatum.u.int64].active = mtfActiveDatum.u.boolean;
+            allMTFs[mtfIDDatum.u.int64].recontaining = mtfActiveDatum.u.boolean;
             allMTFs[mtfIDDatum.u.int64].deployed = mtfDeployedDatum.u.boolean;
             allMTFs[mtfIDDatum.u.int64].deploymentWeeksRemaining = mtfWeeksRemDatum.u.int64;
             allMTFs[mtfIDDatum.u.int64].personnel.operational = mtfOperationalDatum.u.int64;

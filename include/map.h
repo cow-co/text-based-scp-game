@@ -6,19 +6,20 @@
 typedef struct {
     char name[64];
     char description[1024];
-    unsigned characters[8]; 
-    unsigned interactables[8];
-    unsigned connections[8];
+    size_t characters[8]; 
+    size_t interactables[8];
+    size_t connections[8];
     unsigned repairCost;
-    unsigned firstEntrySetsFlag;
-    unsigned firstEntryUnsetsFlag;
-    unsigned requiresFlagSet;
-    unsigned requiresFlagUnset;
+    size_t firstEntrySetsFlag;
+    size_t firstEntryUnsetsFlag;
+    size_t requiresFlagSet;
+    size_t requiresFlagUnset;
+    bool entered;
 } Room;
 
 typedef struct {
     Room rooms[32];
-    unsigned entranceRooms[4];
+    size_t entranceRooms[4];
 } Facility;
 
 extern Facility siteFacility;
@@ -30,10 +31,10 @@ typedef struct {
     char name[64];
     char inspectText[256];
     char interactText[256];
-    unsigned requiresFlag;
-    unsigned unrequiresFlag;
-    unsigned setsFlag;
-    unsigned unsetsFlag;
+    size_t requiresFlag;
+    size_t unrequiresFlag;
+    size_t setsFlag;
+    size_t unsetsFlag;
 } Interactable;
 extern Interactable allInteractables[64];
 

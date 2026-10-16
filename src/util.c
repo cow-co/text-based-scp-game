@@ -3,12 +3,10 @@
 #include <time.h>
 #include <string.h>
 
-// TODO Make this a format message
 void log_error(const char* const message) {
     log_message(LOG_LVL_ERROR, message);
 }
 
-// TODO Make this a format message
 void log_message(const LogLevel level, const char* const message) {
     // Later, can do more here like also logging to a file
     time_t current = time(NULL);
@@ -34,7 +32,7 @@ void clear_screen() {
     printf("\e[H\e[2J\e[3J");   // The sequence used by `clear` in the terminal
 }
 
-int read_numeric_input(unsigned max, unsigned min) {
+int read_numeric_input(size_t max, size_t min) {
     // NOTE: if min/max > INT_MAX then this can overflow, but in practice we won't have that (all options should be < INT_MAX)
     int selection = -1;
     const int count = fscanf(stdin, "%d", &selection);

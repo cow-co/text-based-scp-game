@@ -23,5 +23,5 @@ void clear_screen();
  * @brief Reads a number from stdin, and validates against the maximum and minimum
  * @returns long -1 if failed to read or failed validation
  */
-int read_numeric_input(unsigned max, unsigned min);
+int read_numeric_input(size_t max, size_t min);
 #endif

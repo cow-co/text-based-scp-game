@@ -12,9 +12,11 @@ typedef enum {
 typedef struct {
     char name[64];
     char description[8192];
+    char breachedDesc[1024];
     SCPObjectClass objectClass;
     bool contained;
     bool breached;  // ie. it's nominally in containment but has escaped
+    bool containmentRepaired;
     double breachProb;
     double captureProb;
     unsigned budgetValue;
@@ -28,7 +30,7 @@ typedef struct {
     char name[64];
     char description[1024];
     char role[64];
-    size_t conversation;  // TODO Should probably ensure all IDs are unsigned
+    size_t conversation;
 } Person;
 
 extern Person allPeople[32];

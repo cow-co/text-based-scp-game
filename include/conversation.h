@@ -5,16 +5,16 @@
 
 typedef struct {
     char text[256];
-    unsigned linksTo;
+    size_t linksTo;
 } ConvoOption;
 
 typedef struct {
     char text[1024];
     ConvoOption options[8];
-    unsigned setsFlag;
-    unsigned unsetsFlag;
-    unsigned requiresFlagSet;
-    unsigned requiresFlagUnset;
+    size_t setsFlag;
+    size_t unsetsFlag;
+    size_t requiresFlagSet;
+    size_t requiresFlagUnset;
 } ConvoNode;
 
 typedef struct {

@@ -356,6 +356,12 @@ void test_BadSCPFiles() {
     res = parse_scps("tests/data/characters/scps/no_budget.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
+    res = parse_scps("tests/data/characters/scps/no_breach_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_scps("tests/data/characters/scps/long_breach_desc.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
     res = parse_scps("tests/data/characters/scps/aaaaaaaaaaaaa.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 }
