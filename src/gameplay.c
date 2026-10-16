@@ -619,6 +619,7 @@ void calculate_breaches() {
             continue;
         }
         double randChance = (double)rand() / (double)RAND_MAX;
+        // TODO Adjust based on containment quality
         if (randChance <= allSCPs[i].breachProb) {
             allSCPs[i].breached = true;
             allSCPs[i].containmentRepaired = false;
@@ -683,7 +684,6 @@ void present_containment_inspection() {
     } else if (input == countContained) {
         return;
     } else {
-        // XXX This will need to change when breaches are implemented (to show a message when breached)
         print_scp_details(containedIDs[input]);
     }
 }

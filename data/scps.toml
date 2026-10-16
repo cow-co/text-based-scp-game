@@ -1,6 +1,7 @@
 [[scp]]
 name = "SCP-049"
 description = "The Plague Doctor"
+breachedDesc = "The containment chamber is eerily quiet and empty..."
 objectClass = 1
 containmentChance = 0.5
 breachChance = 0.5
@@ -8,6 +9,7 @@ budgetValue = 100
 [[scp]]
 name = "SCP-682"
 description = "Resilient Lizard"
+breachedDesc = "The walls of the chamber have been ripped open like so much paper..."
 objectClass = 2
 containmentChance = 0.5
 breachChance = 0.5
