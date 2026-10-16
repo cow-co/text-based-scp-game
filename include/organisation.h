@@ -66,6 +66,8 @@ typedef struct {
     uint8_t reputation;
     size_t mtfs[8];
     uint8_t containmentQuality;
+    size_t activeBreachCount;
+    size_t numContained;
 } Organisation;
 
 /**

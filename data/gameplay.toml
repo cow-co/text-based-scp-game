@@ -18,3 +18,5 @@ scpCaptureChance = 0.3
 
 # This is multiplied by the object class
 repairBaseCost = 1000
+
+baseRecontainProb = 0.7

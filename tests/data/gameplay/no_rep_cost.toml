@@ -14,3 +14,5 @@ mtfWoundingChance = 0.3
 mtfDeathChance = 0.1
 
 scpCaptureChance = 0.3
+
+baseRecontainProb = 0.7
