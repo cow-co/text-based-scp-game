@@ -1,6 +1,6 @@
 # per percentage point of reputation
 budgetScaling = 1000
-# Percentage points reputation per contained SCP; object class then multiplies this
+# Percentage points reputation per contained SCP; object class then multiplies this (eg. Keter is a 3x multiplier)
 scpRepScaling = 3
 # percentage points reputation per percentage point of research budget allocation
 researchRepScaling = 1
@@ -8,3 +8,13 @@ repCostOnBreachPerWeek = 10
 
 costPerMTFMem = 1000
 costPerWoundedMem = 1100
+
+# Like the scpRepScaling, this is multiplied by the SCP's object class, and then scaled back down by the number of MTF operational members
+# Note: these CAN be > 1, if you want to guarantee casualties...
+mtfWoundingChance = 0.3
+mtfDeathChance = 0.1
+
+scpCaptureChance = 0.3
+
+# This is multiplied by the object class
+repairBaseCost = 1000

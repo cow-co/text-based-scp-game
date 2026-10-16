@@ -9,7 +9,6 @@ disabledFlag = 1
 firstEntrySetsFlag = 1
 flagRequired = 10
 firstEntryUnsetsFlag = 10
-containedSCP = 1
 repairCost = 100
 # Room 2
 [[room]]

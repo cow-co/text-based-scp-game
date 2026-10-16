@@ -12,6 +12,10 @@ typedef struct {
     uint8_t repCostOnBreachPerWeek;
     unsigned costPerMTFMem;
     unsigned costPerWoundedMem;
+    double mtfWoundingChance;
+    double mtfDeathChance;
+    double scpCaptureChance;
+    unsigned repairBaseCost;
 } GameplayConfig;
 extern GameplayConfig gameplayConfig;
 int parse_gameplay_config(const char* const filePath);
@@ -36,6 +40,7 @@ typedef struct {
     size_t currentRoom;
     _BitInt(64) narrativeFlags;
     Organisation org;
+    bool gameOver;
     uint8_t week;   // Success criterion is reaching week 52 (one year) so this should be more than big enough
 } Progress;
 

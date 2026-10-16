@@ -13,6 +13,8 @@ typedef struct {
     char name[64];
     char description[8192];
     SCPObjectClass objectClass;
+    bool contained;
+    bool breached;  // ie. it's nominally in containment but has escaped
     double breachProb;
     double captureProb;
     unsigned budgetValue;
@@ -20,6 +22,7 @@ typedef struct {
 
 extern SCP allSCPs[32]; // Not literally ALL SCPs obviously, but all the ones available in the game
 int parse_scps(const char* const filePath);
+void print_scp_details(size_t scpID);
 
 typedef struct {
     char name[64];

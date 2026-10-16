@@ -122,6 +122,12 @@ void test_BadGameplayConfigs() {
 
     res = parse_gameplay_config("tests/data/gameplay/no_wounded_cost.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/no_rep_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_gameplay_config("tests/data/gameplay/low_rep_cost.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
 }
 
 void test_GoodGameplayConfig() {
@@ -144,13 +150,7 @@ void test_BadOrganisationFiles() {
     res = parse_organisation_data("tests/data/organisation/rep_over_100.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
-    res = parse_organisation_data("tests/data/organisation/too_many_skips.toml", &org);
-    TEST_ASSERT_EQUAL_INT(EOF, res);
-
     res = parse_organisation_data("tests/data/organisation/too_many_mtfs.toml", &org);
-    TEST_ASSERT_EQUAL_INT(EOF, res);
-
-    res = parse_organisation_data("tests/data/organisation/skips_not_array.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/mtfs_not_array.toml", &org);
@@ -163,6 +163,21 @@ void test_BadOrganisationFiles() {
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/no_quality.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/high_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/low_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_cap_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_death_chance.toml", &org);
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_organisation_data("tests/data/organisation/no_wound_chance.toml", &org);
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
     res = parse_organisation_data("tests/data/organisation/nonexistent.toml", &org);
@@ -416,9 +431,6 @@ void test_BadMaps() {
     res = parse_facility("tests/data/facility/negative_char_id.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
-    res = parse_facility("tests/data/facility/bad_scp_id.toml");
-    TEST_ASSERT_EQUAL_INT(EOF, res);
-
     res = parse_facility("tests/data/facility/too_many_connections.toml");
     TEST_ASSERT_EQUAL_INT(EOF, res);
 
@@ -450,7 +462,6 @@ void test_GoodMaps() {
     TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].requiresFlagSet);
     TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].firstEntrySetsFlag);
     TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].firstEntryUnsetsFlag);
-    TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].containedSCP);
 
     res = parse_facility("tests/data/facility/good_no_optionals.toml");
     TEST_ASSERT_EQUAL_INT(0, res);

@@ -29,7 +29,6 @@ int parse_room(
     const toml_datum_t roomRequiresUnsetDatum = toml_get(*parent, "disabledFlag");
     const toml_datum_t roomCharactersDatum = toml_get(*parent, "characters");
     const toml_datum_t roomInteractsDatum = toml_get(*parent, "interactables");
-    const toml_datum_t roomSCPDatum = toml_get(*parent, "containedSCP");
     const toml_datum_t roomRepairDatum = toml_get(*parent, "repairCost");
 
     if (roomNameDatum.type != TOML_STRING || roomNameDatum.u.str.len >= maxNameLength || roomNameDatum.u.str.len == 0) {
@@ -76,10 +75,6 @@ int parse_room(
         log_error("Room interactables is not an array of integers, or is too long!\n");
         return EOF;
     }
-    if (roomSCPDatum.type != TOML_UNKNOWN && (roomSCPDatum.type != TOML_INT64 || roomSCPDatum.u.int64 <= 0)) {
-        log_error("Room SCP must be an integer > 0!\n");
-        return EOF;
-    }
     if (roomRepairDatum.type != TOML_INT64 || roomRepairDatum.u.int64 <= 0) {
         log_error("Room repair cost must be an integer > 0!\n");
         return EOF;
@@ -87,9 +82,6 @@ int parse_room(
 
     strncpy(room->name, roomNameDatum.u.str.ptr, roomNameDatum.u.str.len);
     strncpy(room->description, roomDescriptionDatum.u.str.ptr, roomDescriptionDatum.u.str.len);
-    if (roomSCPDatum.type != TOML_UNKNOWN) {
-        room->containedSCP = roomSCPDatum.u.int64;
-    }
     if (roomSetsDatum.type != TOML_UNKNOWN) {
         room->firstEntrySetsFlag = roomSetsDatum.u.int64;
     }
@@ -141,17 +133,14 @@ int parse_facility(const char* const filePath) {
         return EOF;
     }
     const toml_datum_t entrancesDatum = toml_get(tomlResult.toptab, "entrances");
-    if (entrancesDatum.type != TOML_ARRAY || entrancesDatum.u.arr.elem[0].type != TOML_INT64) {
-        log_error("Entrances list must be an array of integers!\n");
-        toml_free(tomlResult);
-        return EOF;
-    }
+
     size_t maxEntrances = sizeof(siteFacility.entranceRooms) / sizeof(siteFacility.entranceRooms[0]);
-    if (entrancesDatum.u.arr.size > maxEntrances) {
-        log_error("Entrances list is too long!\n");
+    if (entrancesDatum.type != TOML_ARRAY || entrancesDatum.u.arr.elem[0].type != TOML_INT64 || entrancesDatum.u.arr.size > maxEntrances) {
+        log_error("Entrances list must be an array of integers, or is too long!\n");
         toml_free(tomlResult);
         return EOF;
     }
+
     for (size_t i = 0; i < entrancesDatum.u.arr.size; ++i) {
         siteFacility.entranceRooms[i] = entrancesDatum.u.arr.elem[i].u.int64;
     }
@@ -188,10 +177,9 @@ int parse_facility(const char* const filePath) {
 void print_facility() {
     for (size_t i = 0; i < countRooms; ++i) {
         printf(
-            "%s\n\t%s\n\tContains: %u\n", 
+            "%s\n\t%s\n", 
             siteFacility.rooms[i].name, 
-            siteFacility.rooms[i].description, 
-            siteFacility.rooms[i].containedSCP
+            siteFacility.rooms[i].description
         );
     }
 }
@@ -288,13 +276,4 @@ int parse_interactables(const char* const filePath) {
 
     toml_free(tomlResult);
     return 0;
-}
-
-bool are_any_rooms_breached() {
-    for (size_t i = 0; i < countRooms; ++i) {
-        if (siteFacility.rooms[i].containmentBreached) {
-            return true;
-        }
-    }
-    return false;
 }

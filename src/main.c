@@ -4,11 +4,18 @@
 #include "menu.h"
 #include "gameplay.h"
 #include "map.h"
-#include <stdio.h>
-#include <math.h>
 #include "util.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
 
 int main() {
+    // Some gameplay features require PRNG, so let's seed that
+    // Technically time() needn't return an integer type, but in practice all reasonable implementations do.
+    // See https://en.cppreference.com/c/numeric/random/srand
+    srand(time(NULL));
+
     Progress progress = {
         .currentRoom = 0,
         .narrativeFlags = 0,
@@ -16,7 +23,6 @@ int main() {
             .budget = {},
             .reputation = 0,
             .mtfs = {},
-            .scps = {},
         },
     };
     printf("////////// Parsing Data Files //////////\n");

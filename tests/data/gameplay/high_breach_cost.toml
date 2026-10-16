@@ -8,3 +8,11 @@ repCostOnBreachPerWeek = 110
 
 costPerMTFMem = 1000
 costPerWoundedMem = 1100
+
+# Like the scpRepScaling, this is multiplied by the SCP's object class, and then scaled back down by the number of MTF operational members
+mtfWoundingChance = 0.3
+mtfDeathChance = 0.1
+
+scpCaptureChance = 0.3
+
+repairBaseCost = 1000
