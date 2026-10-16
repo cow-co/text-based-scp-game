@@ -613,6 +613,20 @@ void present_loser_message() {
     }
 }
 
+void calculate_breaches() {
+    for (size_t i = 0; i < countSCPs; ++i) {
+        if (allSCPs[i].breached || !allSCPs[i].contained) {
+            continue;
+        }
+        double randChance = (double)rand() / (double)RAND_MAX;
+        if (randChance <= allSCPs[i].breachProb) {
+            allSCPs[i].breached = true;
+            allSCPs[i].containmentRepaired = false;
+            printf("%s has breached containment!\n", allSCPs[i].name);
+        }
+    }
+}
+
 void advance_time() {
     const size_t maxMTFsInOrg = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < maxMTFsInOrg; ++i) {
@@ -630,6 +644,7 @@ void advance_time() {
             regenerate(&mtf->personnel, 1, true);
         }
     }
+    calculate_breaches();
     adjust_reputation();
     if (progress.week % 4 == 0) {
         adjust_budget();

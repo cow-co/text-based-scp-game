@@ -15,6 +15,7 @@ typedef struct {
     SCPObjectClass objectClass;
     bool contained;
     bool breached;  // ie. it's nominally in containment but has escaped
+    bool containmentRepaired;
     double breachProb;
     double captureProb;
     unsigned budgetValue;
