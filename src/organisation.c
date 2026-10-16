@@ -16,15 +16,23 @@ void inflict_casualties(Personnel* const personnel, const uint16_t dead, const u
     if (dead >= newOperational) {
         personnel->dead += newOperational;
         newOperational = 0;
+    } else if (UINT16_MAX - personnel->dead < dead) {
+        // Would be exceedingly unlikely, but we protect against wraparound anyway
+        newOperational -= (UINT16_MAX - personnel->dead);
+        personnel->dead = UINT16_MAX;
     } else {
         newOperational -= dead;
-        personnel->dead += dead;    // TODO Prevent wraparound
+        personnel->dead += dead;
     }
     
     if (wounded >= newOperational) {
         personnel->wounded += newOperational;
         newOperational = 0;
-    } else {
+    } else if (UINT16_MAX - personnel->wounded < wounded) {
+        // Would be exceedingly unlikely, but we protect against wraparound anyway
+        newOperational -= (UINT16_MAX - personnel->wounded);
+        personnel->wounded = UINT16_MAX;
+    }  else {
         newOperational -= wounded;
         personnel->wounded += wounded;
     }
@@ -36,8 +44,14 @@ void regenerate(Personnel* const personnel, const uint16_t count, const bool fro
     if (fromWounded && count >= personnel->wounded) {
         toAdd = personnel->wounded;
         personnel->wounded = 0;
+    } else if (fromWounded) {
+        personnel->wounded -= count;
     }
-    personnel->operational += toAdd;    // TODO Prevent Wraparound
+    if (UINT16_MAX - personnel->operational < toAdd) {
+        personnel->operational = UINT16_MAX;
+    } else {
+        personnel->operational += toAdd;
+    }
 }
 
 int parse_mtf_data(const char* const filePath) {
