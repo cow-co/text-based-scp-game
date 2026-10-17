@@ -8,11 +8,13 @@
 #include "tomlc17.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 char playerName[64] = {};
 Progress progress = {};
 GameplayConfig gameplayConfig = {};
+Event events[16] = {};
 
 int parse_gameplay_config(const char* const filePath) {
     const toml_result_t tomlResult= toml_parse_file_ex(filePath);
@@ -131,6 +133,90 @@ bool test_flag(size_t flagBit) {
         bool set = progress.narrativeFlags & (1 << flagBit);
         return set;
     }
+}
+
+int parse_event(const toml_datum_t* const parent, Event* const event) {
+
+    const toml_datum_t setsFlagDatum = toml_get(*parent, "setsFlag");
+    const toml_datum_t requiresFlagDatum = toml_get(*parent, "requiresFlag");
+    const toml_datum_t requiresWeekDatum = toml_get(*parent, "requiresWeek");
+    const toml_datum_t budgetDeltaDatum = toml_get(*parent, "budgetDelta");
+    const toml_datum_t newMTFAssignedDatum = toml_get(*parent, "newMTFAssigned");
+    const toml_datum_t textDatum = toml_get(*parent, "text");
+    const size_t maxTextLen = sizeof(events[0].text);
+
+    if (setsFlagDatum.type != TOML_UNKNOWN && (setsFlagDatum.type != TOML_INT64 || setsFlagDatum.u.int64 < 0)) {
+        log_error("Event sets flag must (if set) be an integer >= 0!\n");
+        return EOF;
+    }
+    if (requiresFlagDatum.type != TOML_UNKNOWN && (requiresFlagDatum.type != TOML_INT64 || requiresFlagDatum.u.int64 < 0)) {
+        log_error("Event requires flag must (if set) be an integer >= 0!\n");
+        return EOF;
+    }
+    if (requiresWeekDatum.type != TOML_UNKNOWN && (requiresWeekDatum.type != TOML_INT64 || requiresWeekDatum.u.int64 < 0)) {
+        log_error("Event requires week must (if set) be an integer >= 0!\n");
+        return EOF;
+    }
+    if (budgetDeltaDatum.type != TOML_UNKNOWN && budgetDeltaDatum.type != TOML_INT64) {
+        log_error("Event budget delta must (if set) be an integer >= 0!\n");
+        return EOF;
+    }
+    if (newMTFAssignedDatum.type != TOML_UNKNOWN && (newMTFAssignedDatum.type != TOML_INT64 || newMTFAssignedDatum.u.int64 <= 0)) {
+        log_error("Event MTF assignment must (if set) be an integer > 0!\n");
+        return EOF;
+    }
+    if (textDatum.type != TOML_STRING || textDatum.u.str.len >= maxTextLen) {
+        log_error("Event text must be a string (or it is too long)!\n");
+        return EOF;
+    }
+
+    if (setsFlagDatum.type != TOML_UNKNOWN) {
+        event->setsFlag = setsFlagDatum.u.int64;
+    }
+    if (requiresFlagDatum.type != TOML_UNKNOWN) {
+        event->requiresFlag = requiresFlagDatum.u.int64;
+    }
+    if (requiresWeekDatum.type != TOML_UNKNOWN) {
+        event->requiresWeek = requiresWeekDatum.u.int64;
+    }
+    if (budgetDeltaDatum.type != TOML_UNKNOWN) {
+        event->budgetDelta = budgetDeltaDatum.u.int64;
+    }
+    if (newMTFAssignedDatum.type != TOML_UNKNOWN) {
+        event->newMTFAssigned = newMTFAssignedDatum.u.int64;
+    }
+    strncpy(event->text, textDatum.u.str.ptr, textDatum.u.str.len);
+    
+    return 0;
+}
+
+int parse_events(const char* const filePath) {
+    clear_array(sizeof(events), &events);
+    const toml_result_t tomlResult = toml_parse_file_ex(filePath);
+    if (!tomlResult.ok) {
+        log_error("Could not read events config file!\n");
+        printf("%s\n", tomlResult.errmsg);
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    const toml_datum_t eventsDatum = toml_get(tomlResult.toptab, "event");
+
+    if (eventsDatum.type != TOML_UNKNOWN && (eventsDatum.type != TOML_ARRAY || eventsDatum.u.arr.size > sizeof(events) / sizeof(Event))) {
+        log_error("Events be an array (or is too long)!\n");
+        toml_free(tomlResult);
+        return EOF;
+    }
+
+    for (size_t i = 0; i < eventsDatum.u.arr.size; ++i) {
+        if (parse_event(&tomlResult.toptab, &events[i]) == EOF) {
+            toml_free(tomlResult);
+            return EOF;
+        }
+    }
+
+    toml_free(tomlResult);
+    return 0;
 }
 
 bool can_enter_room(size_t roomID) {
