@@ -218,7 +218,7 @@ int parse_events(const char* const filePath) {
 
     countEvents = eventsDatum.u.arr.size;
     for (size_t i = 0; i < countEvents; ++i) {
-        if (parse_event(&tomlResult.toptab, &events[i]) == EOF) {
+        if (parse_event(&eventsDatum.u.arr.elem[i], &events[i]) == EOF) {
             toml_free(tomlResult);
             return EOF;
         }
@@ -256,7 +256,6 @@ bool can_access_interactable(const Interactable* const interactable) {
 const ConvoNode* handle_node(const Conversation* const convo, const ConvoNode* node, size_t maxOptions) {
     // Using that set_flag() does nothing if flagBit is zero
     set_flag(node->setsFlag, true);
-    set_flag(node->unsetsFlag, false);
 
     printf("\"%s\"\n", node->text);
     size_t numOptions = 0;

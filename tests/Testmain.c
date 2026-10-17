@@ -135,6 +135,34 @@ void test_GoodGameplayConfig() {
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
+void test_BadEventsConfigs() {
+    int res = parse_events("tests/data/gameplay/events/aaa.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_flag.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_mtf.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_text.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_week.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+}
+
+void test_GoodEventsConfig() {
+    int res = parse_events("tests/data/gameplay/events/good.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+}
+
 /**
  * Organisation Tests
  */
@@ -591,6 +619,8 @@ int main() {
     RUN_TEST(test_ChecksFlagUnsetAmongstMany);
     RUN_TEST(test_BadGameplayConfigs);
     RUN_TEST(test_GoodGameplayConfig);
+    RUN_TEST(test_BadEventsConfigs);
+    RUN_TEST(test_GoodEventsConfig);
 
     // Org
     RUN_TEST(test_BadOrganisationFiles);

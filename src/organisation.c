@@ -252,7 +252,7 @@ void assign_mtf(Organisation* const org, const size_t mtf_id) {
     if (mtf_id > countMTFs) {
         log_error("Could not assign MTF since the ID is too high!\n");
     } else {
-        for (size_t i = 0; i < sizeof(org->mtfs) / sizeof(MTF); ++i) {
+        for (size_t i = 0; i < sizeof(org->mtfs) / sizeof(org->mtfs[0]); ++i) {
             if (org->mtfs[i] == 0) {
                 org->mtfs[i] = mtf_id;
                 return;
