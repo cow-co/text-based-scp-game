@@ -11,9 +11,7 @@ typedef struct {
     size_t connections[8];
     unsigned repairCost;
     size_t firstEntrySetsFlag;
-    size_t firstEntryUnsetsFlag;
     size_t requiresFlagSet;
-    size_t requiresFlagUnset;
     bool entered;
 } Room;
 

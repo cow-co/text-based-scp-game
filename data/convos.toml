@@ -2,7 +2,6 @@
 # Node 1-1
 [[conversation.node]]
 text = "Welcome to Site 115, director. Would you like to ask any questions?"
-requiresUnset = 1
 [[conversation.node.option]]
 text = "What do we specialise in here?"
 linksTo = 2

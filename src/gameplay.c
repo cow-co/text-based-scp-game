@@ -220,18 +220,17 @@ int parse_events(const char* const filePath) {
 }
 
 bool can_enter_room(size_t roomID) {
-    if (siteFacility.rooms[roomID].requiresFlagSet || siteFacility.rooms[roomID].requiresFlagUnset) {
+    if (siteFacility.rooms[roomID].requiresFlagSet) {
         const size_t flagRequired = siteFacility.rooms[roomID].requiresFlagSet;
-        const size_t flagUnrequired = siteFacility.rooms[roomID].requiresFlagUnset;
-        return (test_flag(flagRequired) && !test_flag(flagUnrequired));
+        return test_flag(flagRequired);
     } else {
         return true;
     }
 }
 
 bool can_access_node(const ConvoNode* const node) {
-    if (node->requiresFlagSet || node->requiresFlagUnset) {
-        return (test_flag(node->requiresFlagSet) && !test_flag(node->requiresFlagUnset));
+    if (node->requiresFlagSet) {
+        return test_flag(node->requiresFlagSet);
     } else {
         return true;
     }
@@ -537,7 +536,6 @@ Room* handle_room(Room* const room) {
     // Using that set_flag() does nothing if flagBit is zero
     if (!room->entered) {
         set_flag(room->firstEntrySetsFlag, true);
-        set_flag(room->firstEntryUnsetsFlag, false);
         room->entered = true;
     }
     

@@ -12,9 +12,7 @@ typedef struct {
     char text[1024];
     ConvoOption options[8];
     size_t setsFlag;
-    size_t unsetsFlag;
     size_t requiresFlagSet;
-    size_t requiresFlagUnset;
 } ConvoNode;
 
 typedef struct {

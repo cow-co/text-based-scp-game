@@ -2,9 +2,7 @@
 # Node 1-1
 [[conversation.node]]
 text = "test"
-requiresUnset = 1
 requiresSet = 10
 setsFlag = 1
-unsetsFlag = 10
 [[conversation.node.option]]
 text = "testing"

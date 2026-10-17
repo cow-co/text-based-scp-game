@@ -5,7 +5,6 @@ name = "Entryway"
 description = "Welcome to Site 115!\n\nWhy don't you chat to Dr Anderson over there?"
 connections = [2]
 characters = [2]
-requiresFlagUnset = 1
 repairCost = 100
 # Room 2
 [[room]]

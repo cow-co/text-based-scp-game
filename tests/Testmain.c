@@ -464,10 +464,8 @@ void test_GoodMaps() {
     TEST_ASSERT_EQUAL_STRING("test", siteFacility.rooms[0].description);
     TEST_ASSERT_EQUAL_INT(2, siteFacility.rooms[0].connections[0]);
     TEST_ASSERT_EQUAL_INT(2, siteFacility.rooms[0].characters[0]);
-    TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].requiresFlagUnset);
     TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].requiresFlagSet);
     TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].firstEntrySetsFlag);
-    TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].firstEntryUnsetsFlag);
 
     res = parse_facility("tests/data/facility/good_no_optionals.toml");
     TEST_ASSERT_EQUAL_INT(0, res);
@@ -573,9 +571,7 @@ void test_GoodConvos() {
     TEST_ASSERT_EQUAL_INT(0, res);
     TEST_ASSERT_EQUAL_STRING("test", allConvos[0].nodes[0].text);
     TEST_ASSERT_EQUAL_INT(10, allConvos[0].nodes[0].requiresFlagSet);
-    TEST_ASSERT_EQUAL_INT(1, allConvos[0].nodes[0].requiresFlagUnset);
     TEST_ASSERT_EQUAL_INT(1, allConvos[0].nodes[0].setsFlag);
-    TEST_ASSERT_EQUAL_INT(10, allConvos[0].nodes[0].unsetsFlag);
     TEST_ASSERT_EQUAL_STRING("testing", allConvos[0].nodes[0].options[0].text);
     TEST_ASSERT_EQUAL_INT(2, allConvos[0].nodes[0].options[0].linksTo);
 
