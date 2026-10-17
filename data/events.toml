@@ -4,8 +4,10 @@ requiresFlag = 9
 requiresWeek = 3
 budgetDelta = 1200
 newMTFAssigned = 3
+repDelta = 5
 text = "In the weekly briefing with the O5s, you are praised for your good work, and as a result have had a new MTF assigned and a one-off budget bonus."
 [[event]]
 requiresWeek = 10
 budgetDelta = -200
+repDelta = -5
 text = "In the weekly briefing with the O5s, you are told that a small amount of each site's budget this month is being taken to assist with a global operation."

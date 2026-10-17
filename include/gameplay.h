@@ -42,6 +42,7 @@ typedef struct {
     size_t requiresFlag;    // Optional (though this or requiresWeek is required)
     uint8_t requiresWeek;   // Optional (though this or requiresFlag is required)
     int budgetDelta;        // Optional
+    int repDelta;
     size_t newMTFAssigned;  // Optional
     char text[8192];        // Required
 } Event;

@@ -143,6 +143,7 @@ int parse_event(const toml_datum_t* const parent, Event* const event) {
     const toml_datum_t budgetDeltaDatum = toml_get(*parent, "budgetDelta");
     const toml_datum_t newMTFAssignedDatum = toml_get(*parent, "newMTFAssigned");
     const toml_datum_t textDatum = toml_get(*parent, "text");
+    const toml_datum_t repDeltaDatum = toml_get(*parent, "repDelta");
     const size_t maxTextLen = sizeof(events[0].text);
 
     if (setsFlagDatum.type != TOML_UNKNOWN && (setsFlagDatum.type != TOML_INT64 || setsFlagDatum.u.int64 < 0)) {
@@ -159,6 +160,10 @@ int parse_event(const toml_datum_t* const parent, Event* const event) {
     }
     if (budgetDeltaDatum.type != TOML_UNKNOWN && budgetDeltaDatum.type != TOML_INT64) {
         log_error("Event budget delta must (if set) be an integer >= 0!\n");
+        return EOF;
+    }
+    if (repDeltaDatum.type != TOML_UNKNOWN && repDeltaDatum.type != TOML_INT64) {
+        log_error("Event rep delta must (if set) be an integer >= 0!\n");
         return EOF;
     }
     if (newMTFAssignedDatum.type != TOML_UNKNOWN && (newMTFAssignedDatum.type != TOML_INT64 || newMTFAssignedDatum.u.int64 <= 0)) {
@@ -181,6 +186,9 @@ int parse_event(const toml_datum_t* const parent, Event* const event) {
     }
     if (budgetDeltaDatum.type != TOML_UNKNOWN) {
         event->budgetDelta = budgetDeltaDatum.u.int64;
+    }
+    if (repDeltaDatum.type != TOML_UNKNOWN) {
+        event->repDelta = repDeltaDatum.u.int64;
     }
     if (newMTFAssignedDatum.type != TOML_UNKNOWN) {
         event->newMTFAssigned = newMTFAssignedDatum.u.int64;
@@ -208,7 +216,8 @@ int parse_events(const char* const filePath) {
         return EOF;
     }
 
-    for (size_t i = 0; i < eventsDatum.u.arr.size; ++i) {
+    countEvents = eventsDatum.u.arr.size;
+    for (size_t i = 0; i < countEvents; ++i) {
         if (parse_event(&tomlResult.toptab, &events[i]) == EOF) {
             toml_free(tomlResult);
             return EOF;
@@ -783,6 +792,19 @@ void recontain_scps() {
     }
 }
 
+void handle_events() {
+    for (size_t i = 0; i < countEvents; ++i) {
+        const Event* const evt = &events[i];
+        if (progress.week == evt->requiresWeek && test_flag(evt->requiresFlag)) {
+            printf("%s\n\n", evt->text);
+            assign_mtf(&progress.org, evt->newMTFAssigned);
+            change_budget(&progress.org, evt->budgetDelta);
+            change_reputation(&progress.org, evt->repDelta);
+            set_flag(evt->setsFlag, true);
+        }
+    }
+}
+
 void advance_time() {
     const size_t maxMTFsInOrg = sizeof(progress.org.mtfs) / sizeof(progress.org.mtfs[0]);
     for (size_t i = 0; i < maxMTFsInOrg; ++i) {
@@ -802,6 +824,7 @@ void advance_time() {
     }
     recontain_scps();
     calculate_breaches();
+    handle_events();
     adjust_reputation();
     if (progress.week % 4 == 0) {
         adjust_budget();

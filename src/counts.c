@@ -6,3 +6,4 @@ size_t countInteractables = 0;
 size_t countMTFs = 0;
 size_t countRooms = 0;
 size_t countSCPs = 0;
+size_t countEvents = 0;

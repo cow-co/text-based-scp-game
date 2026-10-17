@@ -205,6 +205,10 @@ int parse_organisation_data(const char* const filePath, Organisation* const outO
 }
 
 void change_reputation(Organisation* const org, const int8_t delta) {
+    if (delta == 0) {
+        return;
+    }
+    
     if (delta < 0 && -delta > org->reputation) {
         org->reputation = 0;
     } else if (org->reputation+delta > 100) {
@@ -215,6 +219,10 @@ void change_reputation(Organisation* const org, const int8_t delta) {
 }
 
 void change_budget(Organisation* const org, const int delta) {
+    if (delta == 0) {
+        return;
+    }
+
     if (delta < 0 && -delta > org->budget.totalAmount) {
         org->budget.totalAmount = 0;
     } else if (delta > 0 && (UINT_MAX - org->budget.totalAmount) < delta) {
@@ -226,6 +234,10 @@ void change_budget(Organisation* const org, const int delta) {
 }
 
 void change_containment_quality(Organisation* const org, const int8_t delta) {
+    if (delta == 0) {
+        return;
+    }
+
     if (delta < 0 && -delta > org->containmentQuality) {
         org->containmentQuality = 0;
     } else if (delta > 0 && org->containmentQuality + delta > 100) {
@@ -233,5 +245,19 @@ void change_containment_quality(Organisation* const org, const int8_t delta) {
         org->containmentQuality = 100;
     } else {
         org->containmentQuality = org->containmentQuality + delta;
+    }
+}
+
+void assign_mtf(Organisation* const org, const size_t mtf_id) {
+    if (mtf_id > countMTFs) {
+        log_error("Could not assign MTF since the ID is too high!\n");
+    } else {
+        for (size_t i = 0; i < sizeof(org->mtfs) / sizeof(MTF); ++i) {
+            if (org->mtfs[i] == 0) {
+                org->mtfs[i] = mtf_id;
+                return;
+            }
+        }
+        printf("Could not assign MTF since there are no free slots!\n");
     }
 }

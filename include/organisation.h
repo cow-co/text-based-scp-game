@@ -106,4 +106,6 @@ void change_budget(Organisation* const org, const int delta);
  * @details Note: This will protect against wraparound
  */
 void change_containment_quality(Organisation* const org, const int8_t delta);
+
+void assign_mtf(Organisation* const org, const size_t mtf_id);
 #endif
