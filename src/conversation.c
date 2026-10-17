@@ -14,9 +14,7 @@ const size_t maxNodes = sizeof(allConvos[0].nodes) / sizeof(allConvos[0].nodes[0
 int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNode) {
     const toml_datum_t nodeTextDatum = toml_get(*tomlNode, "text");
     const toml_datum_t nodeSetDatum = toml_get(*tomlNode, "setsFlag");
-    const toml_datum_t nodeUnsetDatum = toml_get(*tomlNode, "unsetsFlag");
     const toml_datum_t nodeReqDatum = toml_get(*tomlNode, "requiresSet");
-    const toml_datum_t nodeUnreqDatum = toml_get(*tomlNode, "requiresUnset");
     if (nodeTextDatum.type != TOML_STRING || nodeTextDatum.u.str.len >= sizeof(outNode->text) || nodeTextDatum.u.str.len == 0) {
         log_error("Node text is not a string, or is too long, or has no content!\n");
         return EOF;
@@ -25,16 +23,8 @@ int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNod
         log_error("Node set must be integer >= 0!\n");
         return EOF;
     }
-    if (nodeUnsetDatum.type != TOML_UNKNOWN && (nodeUnsetDatum.type != TOML_INT64 || nodeUnsetDatum.u.int64 < 0)) {
-        log_error("Node unset must be integer >= 0!\n");
-        return EOF;
-    }
     if (nodeReqDatum.type != TOML_UNKNOWN && (nodeReqDatum.type != TOML_INT64 || nodeReqDatum.u.int64 < 0)) {
         log_error("Node requiresSet must be integer >= 0!\n");
-        return EOF;
-    }
-    if (nodeUnreqDatum.type != TOML_UNKNOWN && (nodeUnreqDatum.type != TOML_INT64 || nodeUnreqDatum.u.int64 < 0)) {
-        log_error("Node requiresUnset must be integer >= 0!\n");
         return EOF;
     }
     
@@ -42,14 +32,8 @@ int parse_convo_node(const toml_datum_t* const tomlNode, ConvoNode* const outNod
     if (nodeSetDatum.type != TOML_UNKNOWN) {
         outNode->setsFlag = nodeSetDatum.u.int64;
     }
-    if (nodeUnsetDatum.type != TOML_UNKNOWN) {
-        outNode->unsetsFlag = nodeUnsetDatum.u.int64;
-    }
     if (nodeReqDatum.type != TOML_UNKNOWN) {
         outNode->requiresFlagSet = nodeReqDatum.u.int64;
-    }
-    if (nodeUnreqDatum.type != TOML_UNKNOWN) {
-        outNode->requiresFlagUnset = nodeUnreqDatum.u.int64;
     }
 
     const toml_datum_t nodeOptionsDatum = toml_get(*tomlNode, "option");

@@ -9,6 +9,7 @@ extern size_t countMTFs;
 extern size_t countSCPs;
 extern size_t countInteractables;
 extern size_t countConvos;
+extern size_t countEvents;
 
 extern const size_t maxInteracts;
 extern const size_t maxConnections;

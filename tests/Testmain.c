@@ -135,6 +135,34 @@ void test_GoodGameplayConfig() {
     TEST_ASSERT_EQUAL_INT(0, res);
 }
 
+void test_BadEventsConfigs() {
+    int res = parse_events("tests/data/gameplay/events/aaa.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_budget.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_flag.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_mtf.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_rep.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_text.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+
+    res = parse_events("tests/data/gameplay/events/bad_week.toml");
+    TEST_ASSERT_EQUAL_INT(EOF, res);
+}
+
+void test_GoodEventsConfig() {
+    int res = parse_events("tests/data/gameplay/events/good.toml");
+    TEST_ASSERT_EQUAL_INT(0, res);
+}
+
 /**
  * Organisation Tests
  */
@@ -464,10 +492,8 @@ void test_GoodMaps() {
     TEST_ASSERT_EQUAL_STRING("test", siteFacility.rooms[0].description);
     TEST_ASSERT_EQUAL_INT(2, siteFacility.rooms[0].connections[0]);
     TEST_ASSERT_EQUAL_INT(2, siteFacility.rooms[0].characters[0]);
-    TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].requiresFlagUnset);
     TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].requiresFlagSet);
     TEST_ASSERT_EQUAL_INT(1, siteFacility.rooms[0].firstEntrySetsFlag);
-    TEST_ASSERT_EQUAL_INT(10, siteFacility.rooms[0].firstEntryUnsetsFlag);
 
     res = parse_facility("tests/data/facility/good_no_optionals.toml");
     TEST_ASSERT_EQUAL_INT(0, res);
@@ -573,9 +599,7 @@ void test_GoodConvos() {
     TEST_ASSERT_EQUAL_INT(0, res);
     TEST_ASSERT_EQUAL_STRING("test", allConvos[0].nodes[0].text);
     TEST_ASSERT_EQUAL_INT(10, allConvos[0].nodes[0].requiresFlagSet);
-    TEST_ASSERT_EQUAL_INT(1, allConvos[0].nodes[0].requiresFlagUnset);
     TEST_ASSERT_EQUAL_INT(1, allConvos[0].nodes[0].setsFlag);
-    TEST_ASSERT_EQUAL_INT(10, allConvos[0].nodes[0].unsetsFlag);
     TEST_ASSERT_EQUAL_STRING("testing", allConvos[0].nodes[0].options[0].text);
     TEST_ASSERT_EQUAL_INT(2, allConvos[0].nodes[0].options[0].linksTo);
 
@@ -595,6 +619,8 @@ int main() {
     RUN_TEST(test_ChecksFlagUnsetAmongstMany);
     RUN_TEST(test_BadGameplayConfigs);
     RUN_TEST(test_GoodGameplayConfig);
+    RUN_TEST(test_BadEventsConfigs);
+    RUN_TEST(test_GoodEventsConfig);
 
     // Org
     RUN_TEST(test_BadOrganisationFiles);

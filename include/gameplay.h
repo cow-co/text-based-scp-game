@@ -38,6 +38,18 @@ void set_flag(size_t flagBit, const bool set);
 bool test_flag(size_t flagBit);
 
 typedef struct {
+    size_t setsFlag;        // Optional
+    size_t requiresFlag;    // Optional (though this or requiresWeek is required)
+    uint8_t requiresWeek;   // Optional (though this or requiresFlag is required)
+    int budgetDelta;        // Optional
+    int repDelta;
+    size_t newMTFAssigned;  // Optional
+    char text[8192];        // Required
+} Event;
+extern Event events[16];
+int parse_events(const char* const filePath);
+
+typedef struct {
     size_t currentRoom;
     _BitInt(64) narrativeFlags;
     Organisation org;

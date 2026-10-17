@@ -5,10 +5,8 @@ name = "Entryway"
 description = "test"
 connections = [2]
 characters = [2]
-disabledFlag = 1
 firstEntrySetsFlag = 1
 flagRequired = 10
-firstEntryUnsetsFlag = 10
 repairCost = 100
 # Room 2
 [[room]]

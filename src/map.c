@@ -24,9 +24,7 @@ int parse_room(
     const toml_datum_t roomDescriptionDatum = toml_get(*parent, "description");
     const toml_datum_t roomConnectionsDatum = toml_get(*parent, "connections");
     const toml_datum_t roomSetsDatum = toml_get(*parent, "firstEntrySetsFlag");
-    const toml_datum_t roomUnsetsDatum = toml_get(*parent, "firstEntryUnsetsFlag");
     const toml_datum_t roomRequiresSetDatum = toml_get(*parent, "flagRequired");
-    const toml_datum_t roomRequiresUnsetDatum = toml_get(*parent, "disabledFlag");
     const toml_datum_t roomCharactersDatum = toml_get(*parent, "characters");
     const toml_datum_t roomInteractsDatum = toml_get(*parent, "interactables");
     const toml_datum_t roomRepairDatum = toml_get(*parent, "repairCost");
@@ -43,16 +41,8 @@ int parse_room(
         log_error("Room sets must be integer > 0!\n");
         return EOF;
     }
-    if (roomUnsetsDatum.type != TOML_UNKNOWN && (roomUnsetsDatum.type != TOML_INT64 || roomUnsetsDatum.u.int64 <= 0)) {
-        log_error("Room unsets must be integer > 0!\n");
-        return EOF;
-    }
     if (roomRequiresSetDatum.type != TOML_UNKNOWN && (roomRequiresSetDatum.type != TOML_INT64 || roomRequiresSetDatum.u.int64 <= 0)) {
         log_error("Room flag required must be integer > 0!\n");
-        return EOF;
-    }
-    if (roomRequiresUnsetDatum.type != TOML_UNKNOWN && (roomRequiresUnsetDatum.type != TOML_INT64 || roomRequiresUnsetDatum.u.int64 <= 0)) {
-        log_error("Room disabled flag must be integer > 0!\n");
         return EOF;
     }
     if (roomConnectionsDatum.type != TOML_ARRAY || roomConnectionsDatum.u.arr.size >= maxConnections || roomConnectionsDatum.u.arr.elem[0].type != TOML_INT64) {
@@ -85,14 +75,8 @@ int parse_room(
     if (roomSetsDatum.type != TOML_UNKNOWN) {
         room->firstEntrySetsFlag = roomSetsDatum.u.int64;
     }
-    if (roomUnsetsDatum.type != TOML_UNKNOWN) {
-        room->firstEntryUnsetsFlag = roomUnsetsDatum.u.int64;
-    }
     if (roomRequiresSetDatum.type != TOML_UNKNOWN) {
         room->requiresFlagSet = roomRequiresSetDatum.u.int64;
-    }
-    if (roomRequiresUnsetDatum.type != TOML_UNKNOWN) {
-        room->requiresFlagUnset = roomRequiresUnsetDatum.u.int64;
     }
     if (roomCharactersDatum.type != TOML_UNKNOWN) {
         for (size_t j = 0; j < roomCharactersDatum.u.arr.size; ++j) {
